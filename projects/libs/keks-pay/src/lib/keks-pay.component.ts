@@ -1,74 +1,95 @@
-import {Component, Input, signal, WritableSignal} from '@angular/core';
+import {Component, inject, Input, OnInit} from '@angular/core';
+import {KeksPayStateModel} from "./models/keks-pay.req.model";
+import {KeksPayService} from "./services/keks-pay.service";
+import {HttpClientModule} from "@angular/common/http";
 
 @Component({
   selector: 'lib-keks-pay',
   standalone: true,
-  imports: [],
+  imports: [HttpClientModule],
   templateUrl: 'keks-pay.component.html',
-  styleUrl: 'keks-pay.component.scss'
+  styleUrl: 'keks-pay.component.scss',
+  providers: [KeksPayService]
 })
-export class KeksPayComponent {
-  private _billId: WritableSignal<string> = signal('');
-  private _keksId: WritableSignal<string> = signal('');
-  private _tid: WritableSignal<string> = signal('');
-  private _store: WritableSignal<string> = signal('');
-  private _amount: WritableSignal<number> = signal(0);
-  private _status: WritableSignal<number> = signal(0);
-  private _message: WritableSignal<string> = signal('');
+export class KeksPayComponent implements OnInit {
+  private _state: KeksPayStateModel = {
+    billid: '',
+    keksid: '',
+    tid: '',
+    store: '',
+    amount: 0,
+    status: 0,
+    message: ''
+  };
+  readonly #keksPayService = inject(KeksPayService);
 
-  get billId(): WritableSignal<string> {
-    return this._billId;
+  ngOnInit() {
+    this.#keksPayService.authorizeTransaction(this.state).subscribe(data => {
+      console.log(data)
+    })
   }
 
-  @Input() set billId(value: string) {
-    this._billId.set(value);
+  get state(): KeksPayStateModel {
+    return this._state;
   }
 
-  get keksId(): WritableSignal<string> {
-    return this._keksId;
+  set state(value: KeksPayStateModel) {
+    this._state = value;
   }
 
-  @Input() set keksId(value: string) {
-    this._keksId.set(value);
+  get billid(): string {
+    return this.state.billid;
   }
 
-  get tid(): WritableSignal<string> {
-    return this._tid;
+  @Input() set billid(value: string) {
+    this.state.billid = value;
+  }
+
+  get keksid(): string {
+    return this.state.keksid;
+  }
+
+  @Input() set keksid(value: string) {
+    this.state.keksid = value;
+  }
+
+  get tid(): string {
+    return this.state.tid;
   }
 
   @Input() set tid(value: string) {
-    this._tid.set(value);
+    this.state.tid = value;
   }
 
-  get store(): WritableSignal<string> {
-    return this._store;
+  get store(): string {
+    return this.state.store;
   }
 
   @Input() set store(value: string) {
-    this._store.set(value);
+    this.state.store = value;
   }
 
-  get amount(): WritableSignal<number> {
-    return this._amount;
+  get amount(): number {
+    return this.state.amount;
   }
 
   @Input() set amount(value: number) {
-    this._amount.set(value);
+    this.state.amount = value;
   }
 
-  get status(): WritableSignal<number> {
-    return this._status;
+  get status(): number {
+    return this.state.status;
   }
 
   @Input() set status(value: number) {
-    this._status.set(value);
+    this.state.status = value;
   }
 
-  get message(): WritableSignal<string> {
-    return this._message;
+  get message(): string {
+    return this.state.message;
   }
 
   @Input() set message(value: string) {
-    this._message.set(value);
+    this.state.message = value;
   }
 }

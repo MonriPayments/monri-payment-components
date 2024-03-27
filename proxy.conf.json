@@ -1,0 +1,8 @@
+{
+  "/eretailer": {
+    "target": "https://kekspayuat.erstebank.hr",
+    "secure": true,
+    "logLevel": "debug",
+    "changeOrigin": true
+  }
+}

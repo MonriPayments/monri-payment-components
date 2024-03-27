@@ -67,7 +67,9 @@
               "projects/apps/keks-pay-app/src/assets"
             ],
             "styles": ["projects/apps/keks-pay-app/src/styles.scss"],
-            "scripts": []
+            "scripts": [
+              "./node_modules/crypto-js/crypto-js.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -100,6 +102,7 @@
               "buildTarget": "keks-pay-app:build:production"
             },
             "development": {
+              "proxyConfig": "proxy.conf.json",
               "buildTarget": "keks-pay-app:build:development"
             }
           },
