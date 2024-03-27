@@ -1,0 +1,5 @@
+{
+  "name": "keks-pay-app",
+  "version": "0.0.1",
+  "main": "keks-pay-bundle.js"
+}
