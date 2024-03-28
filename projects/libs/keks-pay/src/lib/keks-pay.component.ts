@@ -1,7 +1,7 @@
-import {Component, inject, Input, OnInit} from '@angular/core';
-import {KeksPayStateModel} from "./models/keks-pay.req.model";
-import {KeksPayService} from "./services/keks-pay.service";
+import {Component, inject, Input, Signal} from '@angular/core';
 import {HttpClientModule} from "@angular/common/http";
+import {patchState} from "@ngrx/signals";
+import {KeksPayStore} from "./keks-pay.store";
 
 @Component({
   selector: 'lib-keks-pay',
@@ -9,87 +9,64 @@ import {HttpClientModule} from "@angular/common/http";
   imports: [HttpClientModule],
   templateUrl: 'keks-pay.component.html',
   styleUrl: 'keks-pay.component.scss',
-  providers: [KeksPayService]
+  providers: [KeksPayStore]
 })
-export class KeksPayComponent implements OnInit {
-  private _state: KeksPayStateModel = {
-    billid: '',
-    keksid: '',
-    tid: '',
-    store: '',
-    amount: 0,
-    status: 0,
-    message: ''
-  };
-  readonly #keksPayService = inject(KeksPayService);
+export class KeksPayComponent {
+  readonly keksPayStore = inject(KeksPayStore);
 
-  ngOnInit() {
-    this.#keksPayService.authorizeTransaction(this.state).subscribe(data => {
-      console.log(data)
-    })
-  }
-
-  get state(): KeksPayStateModel {
-    return this._state;
-  }
-
-  set state(value: KeksPayStateModel) {
-    this._state = value;
-  }
-
-  get billid(): string {
-    return this.state.billid;
+  get billid(): Signal<string> {
+    return this.keksPayStore.billid;
   }
 
   @Input() set billid(value: string) {
-    this.state.billid = value;
+    patchState(this.keksPayStore, {billid: value});
   }
 
-  get keksid(): string {
-    return this.state.keksid;
+  get keksid(): Signal<string> {
+    return this.keksPayStore.keksid;
   }
 
   @Input() set keksid(value: string) {
-    this.state.keksid = value;
+    patchState(this.keksPayStore, {keksid: value});
   }
 
-  get tid(): string {
-    return this.state.tid;
+  get tid(): Signal<string> {
+    return this.keksPayStore.tid;
   }
 
   @Input() set tid(value: string) {
-    this.state.tid = value;
+    patchState(this.keksPayStore, {tid: value});
   }
 
-  get store(): string {
-    return this.state.store;
+  get store(): Signal<string> {
+    return this.keksPayStore.store;
   }
 
   @Input() set store(value: string) {
-    this.state.store = value;
+    patchState(this.keksPayStore, {store: value});
   }
 
-  get amount(): number {
-    return this.state.amount;
+  get amount(): Signal<number> {
+    return this.keksPayStore.amount;
   }
 
   @Input() set amount(value: number) {
-    this.state.amount = value;
+    patchState(this.keksPayStore, {amount: value});
   }
 
-  get status(): number {
-    return this.state.status;
+  get status(): Signal<number> {
+    return this.keksPayStore.status;
   }
 
   @Input() set status(value: number) {
-    this.state.status = value;
+    patchState(this.keksPayStore, {status: value});
   }
 
-  get message(): string {
-    return this.state.message;
+  get message(): Signal<string> {
+    return this.keksPayStore.message;
   }
 
   @Input() set message(value: string) {
-    this.state.message = value;
+    patchState(this.keksPayStore, {message: value});
   }
 }
