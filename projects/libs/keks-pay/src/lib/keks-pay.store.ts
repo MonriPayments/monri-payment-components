@@ -9,7 +9,7 @@ import {
 import { computed, inject } from '@angular/core';
 import { KeksPayService } from './services/keks-pay.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { filter, pipe, switchMap, tap } from 'rxjs';
+import { delay, filter, pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { KeksPayResModel } from './models/keks-pay.res.model';
 import {
@@ -27,13 +27,11 @@ export const KeksPayStore = signalStore(
     store: '',
     amount: 0,
     status: 0,
-    message: '',
-    showSpinner: false
+    message: ''
   }),
   withRequestStatus(),
   withComputed(({ status, isPending }) => {
     return {
-      showProgress: isPending,
       showSpinner: computed(() => isPending() && status() === 0)
     };
   }),
@@ -43,6 +41,7 @@ export const KeksPayStore = signalStore(
         tap(() => patchState(store, setPending())),
         switchMap(() => {
           return keksPayService.authorizeTransaction().pipe(
+            delay(2000),
             tapResponse({
               next: (transactionResponse: KeksPayResModel) => {
                 patchState(

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import {KeksPayComponent} from "../../../../../libs/keks-pay/src/lib/keks-pay.component";
+import { KeksPayComponent } from '../../../../../libs/keks-pay/src/lib/keks-pay.component';
 
 @Component({
   selector: 'app-keks-pay',
@@ -8,6 +8,4 @@ import {KeksPayComponent} from "../../../../../libs/keks-pay/src/lib/keks-pay.co
   templateUrl: './keks-pay-showcase.component.html',
   styleUrl: './keks-pay-showcase.component.scss'
 })
-export class KeksPayShowcaseComponent {
-
-}
+export class KeksPayShowcaseComponent {}

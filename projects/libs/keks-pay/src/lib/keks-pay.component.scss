@@ -1,15 +1,22 @@
 @font-face {
   font-family: 'ITC Avant Garde Gothic Std Demi';
-  src: url('assets/fonts/ITC Avant Garde Gothic Std Demi.otf') format('opentype');
+  src: url('assets/fonts/ITC Avant Garde Gothic Std Demi.otf')
+    format('opentype');
   font-weight: 300;
   font-style: normal;
 }
-h1, h2, h3, p, span, textarea, input {
+h1,
+h2,
+h3,
+p,
+span,
+textarea,
+input {
   font-family: ITC Avant Garde Gothic Std Demi, sans-serif;
 }
 h3 {
   color: #595959;
 }
 h1 {
-  color: #6A6A6A;
+  color: #6a6a6a;
 }

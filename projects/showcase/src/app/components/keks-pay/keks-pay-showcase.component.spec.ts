@@ -9,8 +9,7 @@ describe('KeksPayComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [KeksPayShowcaseComponent]
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(KeksPayShowcaseComponent);
     component = fixture.componentInstance;

@@ -1,7 +1,7 @@
-import { Component, inject, Input, Signal } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { patchState } from '@ngrx/signals';
 import { KeksPayStore } from './keks-pay.store';
-import {QRCodeModule} from "angularx-qrcode";
+import { QRCodeModule } from 'angularx-qrcode';
 
 @Component({
   selector: 'lib-keks-pay',
