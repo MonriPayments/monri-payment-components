@@ -67,9 +67,7 @@
               "projects/apps/keks-pay-app/src/assets"
             ],
             "styles": ["projects/apps/keks-pay-app/src/styles.scss"],
-            "scripts": [
-              "./node_modules/crypto-js/crypto-js.js"
-            ]
+            "scripts": ["./node_modules/crypto-js/crypto-js.js"]
           },
           "configurations": {
             "production": {
