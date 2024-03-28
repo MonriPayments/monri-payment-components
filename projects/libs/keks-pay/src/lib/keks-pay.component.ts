@@ -1,11 +1,12 @@
 import { Component, inject, Input, Signal } from '@angular/core';
 import { patchState } from '@ngrx/signals';
 import { KeksPayStore } from './keks-pay.store';
+import {QRCodeModule} from "angularx-qrcode";
 
 @Component({
   selector: 'lib-keks-pay',
   standalone: true,
-  imports: [],
+  imports: [QRCodeModule],
   templateUrl: 'keks-pay.component.html',
   styleUrl: 'keks-pay.component.scss',
   providers: [KeksPayStore]

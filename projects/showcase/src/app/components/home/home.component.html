@@ -1,7 +1,14 @@
-<div>
-  <h1>Apps:</h1>
-  <ul>
-    <li [routerLink]="'keks-pay'">KeksPay</li>
-  </ul>
+<div class="container">
+  <div class="container-side-menu">
+    <h1>Apps:</h1>
+    <ul>
+      <li [routerLink]="'keks-pay'">KeksPay</li>
+    </ul>
+  </div>
+  <div class="container-router-outlet">
+    @defer {
+      <router-outlet/>
+    }
+  </div>
 </div>
-<router-outlet/>
+
