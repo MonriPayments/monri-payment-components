@@ -195,7 +195,8 @@
               "buildTarget": "showcase:build:production"
             },
             "development": {
-              "buildTarget": "showcase:build:development"
+              "buildTarget": "showcase:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

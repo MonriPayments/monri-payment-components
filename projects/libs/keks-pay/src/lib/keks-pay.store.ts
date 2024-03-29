@@ -6,12 +6,12 @@ import {
   withMethods,
   withState
 } from '@ngrx/signals';
-import { computed, inject } from '@angular/core';
-import { KeksPayService } from './services/keks-pay.service';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { delay, filter, pipe, switchMap, tap } from 'rxjs';
-import { tapResponse } from '@ngrx/operators';
-import { KeksPayResModel } from './models/keks-pay.res.model';
+import {computed, ElementRef, inject} from '@angular/core';
+import {KeksPayService} from './services/keks-pay.service';
+import {rxMethod} from '@ngrx/signals/rxjs-interop';
+import {delay, filter, pipe, switchMap, tap} from 'rxjs';
+import {tapResponse} from '@ngrx/operators';
+import {KeksPayResModel} from './models/keks-pay.res.model';
 import {
   setError,
   setFulfilled,
@@ -30,25 +30,25 @@ export const KeksPayStore = signalStore(
     message: ''
   }),
   withRequestStatus(),
-  withComputed(({ status, isPending }) => {
+  withComputed(({status, isPending}) => {
     return {
       showSpinner: computed(() => isPending() && status() === 0)
     };
   }),
-  withMethods((store, keksPayService = inject(KeksPayService)) => ({
+  withMethods((store, keksPayService = inject(KeksPayService), elementRef = inject(ElementRef)) => ({
     authorizeTransaction: rxMethod<void>(
       pipe(
         tap(() => patchState(store, setPending())),
         switchMap(() => {
           return keksPayService.authorizeTransaction().pipe(
-            delay(2000),
             tapResponse({
-              next: (transactionResponse: KeksPayResModel) => {
-                patchState(
-                  store,
-                  { status: transactionResponse.status },
-                  setFulfilled()
-                );
+              next: (transactionResponse: any) => {
+                console.log(transactionResponse)
+                // patchState(
+                //   store,
+                //   {status: transactionResponse.status},
+                //   setFulfilled()
+                // );
               },
               error: (error: { message: string }) => {
                 patchState(store, setError(error.message));
@@ -63,10 +63,23 @@ export const KeksPayStore = signalStore(
         filter(Boolean),
         tap(error => console.error(error))
       )
+    ),
+    notifyOnLoad: rxMethod<void>(
+      pipe(
+        tap(() => elementRef.nativeElement.dispatchEvent(
+          new CustomEvent(
+            'onComponentLoad',
+            {
+              detail: 'Component loaded'
+            }
+          )
+        ))
+      )
     )
   })),
   withHooks({
     onInit(store) {
+      store.notifyOnLoad();
       store.authorizeTransaction();
       store.notifyOnError(store.error);
     }

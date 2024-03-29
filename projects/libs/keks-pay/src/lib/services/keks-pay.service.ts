@@ -4,8 +4,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import * as CryptoJS from 'crypto-js';
 import { of } from 'rxjs';
 
-const keksPayApiUrl = 'https://kekspayuat.erstebank.hr/eretailer';
-
 @Injectable({
   providedIn: 'root'
 })
@@ -14,31 +12,26 @@ export class KeksPayService {
 
   authorizeTransaction() {
     const encodedHash = this.calculateHash(
-      '123456666',
+      'P0011033',
       0,
       123.45,
       'HGHGHG121222',
-      '8547254'
+      '935280F6B02853E31A9BCE44'
     );
     console.log(encodedHash, 'hamdija');
-
-    return of({
-      status: 1,
-      message: encodedHash
+    const headers = new HttpHeaders({
+      'Authorization': encodedHash
     });
-    // const headers = new HttpHeaders({
-    //   'Authorization': encodedHash
-    // });
-    //
-    // return this.httpClient.post('eretailer', {
-    //   "bill_id": 'HGHGHG121222',
-    //   "keks_id": '8547254',
-    //   "tid": '123456666',
-    //   "store": 'WEBSHOP',
-    //   "amount": 123.45,
-    //   "status": 0,
-    //   "message": 'Paid'
-    // }, {headers: headers});
+
+    return this.#http.post('eretailer', {
+      "bill_id": 'HGHGHG121222',
+      "keks_id": '935280F6B02853E31A9BCE44',
+      "tid": 'P0011033',
+      "store": 'WEBSHOP',
+      "amount": 123.45,
+      "status": 0,
+      "message": 'Paid'
+    }, {headers: headers});
   }
 
   calculateHash(
