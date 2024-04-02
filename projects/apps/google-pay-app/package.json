@@ -1,0 +1,5 @@
+{
+  "name": "google-pay-app",
+  "version": "0.0.1",
+  "main": "google-pay-bundle.js"
+}

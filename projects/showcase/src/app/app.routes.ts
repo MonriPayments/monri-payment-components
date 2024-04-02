@@ -17,6 +17,13 @@ export const routes: Routes = [
           import('./components/keks-pay/keks-pay-showcase.component').then(
             x => x.KeksPayShowcaseComponent
           )
+      },
+      {
+        path: 'google-pay',
+        loadComponent: () =>
+          import('./components/google-pay/google-pay-showcase.component').then(
+            x => x.GooglePayShowcaseComponent
+          )
       }
     ]
   }
