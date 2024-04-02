@@ -1,4 +1,4 @@
-import {Component, Injector, OnInit} from '@angular/core';
+import {Component, inject, Injector, OnInit} from '@angular/core';
 import {KeksPayComponent} from '../../../../../libs/keks-pay/src/lib/keks-pay.component';
 import {createCustomElement} from "@angular/elements";
 
@@ -19,11 +19,10 @@ interface KeksPayElement extends HTMLElement {
   template: `<div id="keks-pay-component"></div>`
 })
 export class KeksPayShowcaseComponent implements OnInit {
-  constructor(private injector: Injector) {
-  }
+  readonly #injector = inject(Injector);
 
   ngOnInit() {
-    const customElementConstructor = createCustomElement(KeksPayComponent, {injector: this.injector});
+    const customElementConstructor = createCustomElement(KeksPayComponent, {injector: this.#injector});
     customElements.define('lib-keks-pay', customElementConstructor);
 
     const keksPayElement = document.createElement('lib-keks-pay') as KeksPayElement;

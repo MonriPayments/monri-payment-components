@@ -20,18 +20,23 @@ export class KeksPayService {
     );
     console.log(encodedHash, 'hamdija');
     const headers = new HttpHeaders({
-      'Authorization': encodedHash
+      'Authorization': encodedHash,
+      'Accept': 'application/json'
     });
 
-    return this.#http.post('eretailer', {
-      "bill_id": 'HGHGHG121222',
-      "keks_id": '935280F6B02853E31A9BCE44',
-      "tid": 'P0011033',
-      "store": 'WEBSHOP',
-      "amount": 123.45,
-      "status": 0,
-      "message": 'Paid'
-    }, {headers: headers});
+    return of({
+      hamdija: encodedHash
+    })
+
+    // return this.#http.post('eretailer', {
+    //   "bill_id": 'HGHGHG121222',
+    //   "keks_id": '935280F6B02853E31A9BCE44',
+    //   "tid": 'P0011033',
+    //   "store": 'WEBSHOP',
+    //   "amount": 123.45,
+    //   "status": 0,
+    //   "message": 'Paid'
+    // }, {headers: headers});
   }
 
   calculateHash(

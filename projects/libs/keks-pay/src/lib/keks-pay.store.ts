@@ -44,11 +44,11 @@ export const KeksPayStore = signalStore(
             tapResponse({
               next: (transactionResponse: any) => {
                 console.log(transactionResponse)
-                // patchState(
-                //   store,
-                //   {status: transactionResponse.status},
-                //   setFulfilled()
-                // );
+                patchState(
+                  store,
+                  {status: transactionResponse.status},
+                  setFulfilled()
+                );
               },
               error: (error: { message: string }) => {
                 patchState(store, setError(error.message));
