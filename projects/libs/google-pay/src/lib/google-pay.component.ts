@@ -10,7 +10,8 @@ declare var google: any;
 })
 export class GooglePayComponent implements OnInit {
 
-  constructor() { }
+  constructor() {
+  }
 
   ngOnInit(): void {
     this.loadGooglePayScript();
@@ -51,7 +52,7 @@ export class GooglePayComponent implements OnInit {
       this.processPayment(paymentData)
         .then(() => {
           console.log('Payment successful!');
-          resolve({ transactionState: 'SUCCESS' });
+          resolve({transactionState: 'SUCCESS'});
         })
         .catch(() => {
           console.log('Payment failed. Insufficient funds. Please try again.');
@@ -69,7 +70,7 @@ export class GooglePayComponent implements OnInit {
 
   addGooglePayButton() {
     const paymentsClient = this.getGooglePaymentsClient();
-    const button = paymentsClient.createButton({ onClick: () => this.onGooglePaymentButtonClicked() });
+    const button = paymentsClient.createButton({onClick: () => this.onGooglePaymentButtonClicked()});
     document.getElementById('container')?.appendChild(button);
   }
 
@@ -99,20 +100,24 @@ export class GooglePayComponent implements OnInit {
   }
 
   getGooglePaymentDataRequest() {
-    const cardPaymentMethod = {
-      type: 'CARD',
-      tokenizationSpecification: {
-        type: 'PAYMENT_GATEWAY',
-        parameters: {
-          'gateway': 'example',
-          'gatewayMerchantId': 'exampleGatewayMerchantId'
-        }
-      },
-      transactionInfo: this.getGoogleTransactionInfo() // Include transactionInfo here
-    };
-
     return {
-      ...cardPaymentMethod,
+      apiVersion: 2,
+      apiVersionMinor: 0,
+      allowedPaymentMethods: [{
+        type: 'CARD',
+        parameters: {
+          allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+          allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
+        },
+        tokenizationSpecification: {
+          type: 'PAYMENT_GATEWAY',
+          parameters: {
+            'gateway': 'example',
+            'gatewayMerchantId': 'exampleGatewayMerchantId'
+          }
+        }
+      }],
+      transactionInfo: this.getGoogleTransactionInfo(),
       merchantInfo: {
         merchantId: 'BCR2DN4TQHE6DYLO',
         merchantName: 'Harun'
@@ -120,7 +125,6 @@ export class GooglePayComponent implements OnInit {
       callbackIntents: ["PAYMENT_AUTHORIZATION"]
     };
   }
-
 
 
   getGoogleTransactionInfo() {
@@ -148,15 +152,10 @@ export class GooglePayComponent implements OnInit {
   processPayment(paymentData: any) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        // @todo pass payment token to your gateway to process payment
-        const paymentToken = paymentData.paymentMethodData.token;
-
-        if (Math.floor(Math.random() * 2) % 2 === 0) {
-          reject(new Error('Every other attempt fails, next one should succeed'));
-        } else {
-          resolve({});
-        }
-      }, 500);
+        console.log(paymentData);
+        const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+        resolve({});
+      }, 3000);
     });
   }
 }
