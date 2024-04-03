@@ -9,6 +9,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "prettify-keks-pay": "cd projects/libs/keks-pay && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\" && cd ../../apps/keks-pay-app && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\"",
     "build-keks-pay-library": "ng build keks-pay && ng build keks-pay-app && cd projects/apps/keks-pay-app && webpack"
   },
   "private": true,

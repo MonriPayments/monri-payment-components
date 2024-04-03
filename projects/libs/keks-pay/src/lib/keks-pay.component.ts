@@ -2,6 +2,7 @@ import { Component, inject, Input } from '@angular/core';
 import { patchState } from '@ngrx/signals';
 import { KeksPayStore } from './keks-pay.store';
 import { QRCodeModule } from 'angularx-qrcode';
+import { CustomEventService } from './services/custom-event.service';
 
 @Component({
   selector: 'lib-keks-pay',
@@ -9,7 +10,7 @@ import { QRCodeModule } from 'angularx-qrcode';
   imports: [QRCodeModule],
   templateUrl: 'keks-pay.component.html',
   styleUrl: 'keks-pay.component.scss',
-  providers: [KeksPayStore]
+  providers: [KeksPayStore, CustomEventService]
 })
 export class KeksPayComponent {
   readonly keksPayStore = inject(KeksPayStore);
@@ -18,8 +19,8 @@ export class KeksPayComponent {
     patchState(this.keksPayStore, { billid: value });
   }
 
-  @Input() set keksid(value: string) {
-    patchState(this.keksPayStore, { keksid: value });
+  @Input() set cid(value: string) {
+    patchState(this.keksPayStore, { cid: value });
   }
 
   @Input() set tid(value: string) {
@@ -32,13 +33,5 @@ export class KeksPayComponent {
 
   @Input() set amount(value: number) {
     patchState(this.keksPayStore, { amount: value });
-  }
-
-  @Input() set status(value: number) {
-    patchState(this.keksPayStore, { status: value });
-  }
-
-  @Input() set message(value: string) {
-    patchState(this.keksPayStore, { message: value });
   }
 }
