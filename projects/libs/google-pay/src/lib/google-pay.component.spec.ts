@@ -9,9 +9,8 @@ describe('GooglePayComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [GooglePayComponent]
-    })
-    .compileComponents();
-    
+    }).compileComponents();
+
     fixture = TestBed.createComponent(GooglePayComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -8,9 +8,7 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "paths": {
-      "google-pay": [
-        "./dist/google-pay"
-      ],
+      "google-pay": ["./dist/google-pay"],
       "keks-pay": ["./dist/keks-pay"]
     },
     "noImplicitReturns": true,
