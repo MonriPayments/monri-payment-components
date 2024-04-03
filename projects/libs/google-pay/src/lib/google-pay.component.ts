@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 
 declare var google: any;
 
@@ -9,9 +9,16 @@ declare var google: any;
   styleUrls: ['./google-pay.component.scss']
 })
 export class GooglePayComponent implements OnInit {
-  constructor() {}
+
+  @Input() googleTransactionInfo: any
+  @Input() googlePaymentDataRequest: any
+  @Input() googleIsReadyToPayRequest: any
+  @Input() googleErrorState: any
+  @Input() googleTransactionState?: { onSuccess: string, onError: string }
+  @Input() googleEnvironment?: string
 
   ngOnInit(): void {
+    console.log(this.googleTransactionInfo)
     this.loadGooglePayScript();
   }
 
@@ -25,7 +32,7 @@ export class GooglePayComponent implements OnInit {
   onGooglePayLoaded() {
     const paymentsClient = this.getGooglePaymentsClient();
     paymentsClient
-      .isReadyToPay(this.getGoogleIsReadyToPayRequest())
+      .isReadyToPay(this.googleIsReadyToPayRequest)
       .then((response: any) => {
         if (response.result) {
           this.addGooglePayButton();
@@ -38,7 +45,7 @@ export class GooglePayComponent implements OnInit {
 
   getGooglePaymentsClient() {
     return new google.payments.api.PaymentsClient({
-      environment: 'TEST',
+      environment: this.googleEnvironment,
       paymentDataCallbacks: {
         onPaymentAuthorized: (paymentData: any) =>
           this.onPaymentAuthorized(paymentData)
@@ -52,18 +59,13 @@ export class GooglePayComponent implements OnInit {
       this.processPayment(paymentData)
         .then(() => {
           console.log('Payment successful!');
-          resolve({ transactionState: 'SUCCESS' });
+          resolve({transactionState: this.googleTransactionState?.onSuccess});
         })
         .catch(() => {
           console.log('Payment failed. Insufficient funds. Please try again.');
           resolve({
-            transactionState: 'ERROR',
-            error: {
-              intent: 'PAYMENT_AUTHORIZATION',
-              message:
-                'Insufficient funds, try again. Next attempt should work.',
-              reason: 'PAYMENT_DATA_INVALID'
-            }
+            transactionState: this.googleTransactionState?.onError,
+            error: this.googleErrorState
           });
         });
     });
@@ -79,85 +81,11 @@ export class GooglePayComponent implements OnInit {
 
   onGooglePaymentButtonClicked() {
     console.log('Google Pay button clicked.');
-    const paymentDataRequest = this.getGooglePaymentDataRequest();
-    paymentDataRequest.transactionInfo = this.getGoogleTransactionInfo();
+    const paymentDataRequest = this.googlePaymentDataRequest;
+    paymentDataRequest.transactionInfo = this.googleTransactionInfo;
 
     const paymentsClient = this.getGooglePaymentsClient();
     paymentsClient.loadPaymentData(paymentDataRequest);
-  }
-
-  getGoogleIsReadyToPayRequest() {
-    const baseCardPaymentMethod = {
-      type: 'CARD',
-      parameters: {
-        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-        allowedCardNetworks: ['MASTERCARD', 'VISA']
-      }
-    };
-
-    return {
-      apiVersion: 2,
-      apiVersionMinor: 0,
-      allowedPaymentMethods: [baseCardPaymentMethod]
-    };
-  }
-
-  getGooglePaymentDataRequest() {
-    return {
-      apiVersion: 2,
-      apiVersionMinor: 0,
-      allowedPaymentMethods: [
-        {
-          type: 'CARD',
-          parameters: {
-            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-            allowedCardNetworks: [
-              'AMEX',
-              'DISCOVER',
-              'INTERAC',
-              'JCB',
-              'MASTERCARD',
-              'VISA'
-            ]
-          },
-          tokenizationSpecification: {
-            type: 'PAYMENT_GATEWAY',
-            parameters: {
-              gateway: 'example',
-              gatewayMerchantId: 'exampleGatewayMerchantId'
-            }
-          }
-        }
-      ],
-      transactionInfo: this.getGoogleTransactionInfo(),
-      merchantInfo: {
-        merchantId: 'BCR2DN4TQHE6DYLO',
-        merchantName: 'Harun'
-      },
-      callbackIntents: ['PAYMENT_AUTHORIZATION']
-    };
-  }
-
-  getGoogleTransactionInfo() {
-    return {
-      displayItems: [
-        {
-          label: 'Subtotal',
-          type: 'SUBTOTAL',
-          price: '2.00'
-        },
-        {
-          label: 'Tax',
-          type: 'TAX',
-          price: '1.00'
-        }
-      ],
-      countryCode: 'US',
-      currencyCode: 'USD',
-      totalPriceStatus: 'FINAL',
-      totalPrice: '3.00',
-      totalPriceLabel: 'Total'
-    };
   }
 
   processPayment(paymentData: any) {
