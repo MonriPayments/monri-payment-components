@@ -20,3 +20,20 @@ h3 {
 h1 {
   color: #6a6a6a;
 }
+.svg-container {
+  background-image: url('assets/logo/keks-pay-logo.svg');
+  width: 1.5rem;
+  height: 2.5rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+
+  &-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

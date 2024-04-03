@@ -1,87 +1,45 @@
 import {
-  patchState,
   signalStore,
   withComputed,
   withHooks,
   withMethods,
   withState
 } from '@ngrx/signals';
-import {computed, ElementRef, inject} from '@angular/core';
-import {KeksPayService} from './services/keks-pay.service';
-import {rxMethod} from '@ngrx/signals/rxjs-interop';
-import {delay, filter, pipe, switchMap, tap} from 'rxjs';
-import {tapResponse} from '@ngrx/operators';
-import {KeksPayResModel} from './models/keks-pay.res.model';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus
-} from './shared/request-status.feature';
+import { computed, inject } from '@angular/core';
+import { CustomEventService } from './services/custom-event.service';
 
 export const KeksPayStore = signalStore(
   withState({
     billid: '',
-    keksid: '',
+    cid: '',
     tid: '',
     store: '',
-    amount: 0,
-    status: 0,
-    message: ''
+    amount: 0
   }),
-  withRequestStatus(),
-  withComputed(({status, isPending}) => {
-    return {
-      showSpinner: computed(() => isPending() && status() === 0)
-    };
-  }),
-  withMethods((store, keksPayService = inject(KeksPayService), elementRef = inject(ElementRef)) => ({
-    authorizeTransaction: rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() => {
-          return keksPayService.authorizeTransaction().pipe(
-            tapResponse({
-              next: (transactionResponse: any) => {
-                console.log(transactionResponse)
-                patchState(
-                  store,
-                  {status: transactionResponse.status},
-                  setFulfilled()
-                );
-              },
-              error: (error: { message: string }) => {
-                patchState(store, setError(error.message));
-              }
-            })
-          );
-        })
-      )
-    ),
-    notifyOnError: rxMethod<string | null>(
-      pipe(
-        filter(Boolean),
-        tap(error => console.error(error))
-      )
-    ),
-    notifyOnLoad: rxMethod<void>(
-      pipe(
-        tap(() => elementRef.nativeElement.dispatchEvent(
-          new CustomEvent(
-            'onComponentLoad',
-            {
-              detail: 'Component loaded'
-            }
-          )
-        ))
-      )
-    )
+  withComputed(({ billid, cid, tid, store, amount }) => ({
+    redirectUrl: computed(() => {
+      return (
+        'https://kekspay.hr/pay?cid=' +
+        cid() +
+        '&tid=' +
+        tid() +
+        '&store=' +
+        store() +
+        '&bill_id=' +
+        billid() +
+        '&amount=' +
+        amount()
+      );
+    })
+  })),
+  withMethods((store, customEventService = inject(CustomEventService)) => ({
+    notifyOnLoad(): void {
+      customEventService.dispatchEvent('onComponentLoad', 'Component loaded');
+    }
   })),
   withHooks({
     onInit(store) {
       store.notifyOnLoad();
-      store.authorizeTransaction();
-      store.notifyOnError(store.error);
     }
   })
 );

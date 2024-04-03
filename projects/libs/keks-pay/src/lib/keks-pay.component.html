@@ -1,12 +1,12 @@
-@defer (when keksPayStore.isFulfilled()) {
 <div class="container">
   <h1>Plaćanje putem KEKS Paya</h1>
   <h3>1. Otvori KEKS Pay</h3>
-  <h3>2. Pritisni ikonicu</h3>
+  <div class="container-icon-wrapper">
+    <h3>2. Pritisni</h3>
+    <div class="svg-container"></div>
+    <h3>ikonicu</h3>
+  </div>
   <h3>3. Odaberi 'Skeniraj QR kod'</h3>
   <h3>4. Skeniraj QR kod</h3>
-  <qrcode [qrdata]="'hamdija hamdone veliki'" [width]="180"></qrcode>
+  <qrcode [qrdata]="keksPayStore.redirectUrl()" [width]="180"></qrcode>
 </div>
-} @placeholder {
-<p>Loading..</p>
-}
