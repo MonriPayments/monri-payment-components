@@ -10,6 +10,7 @@ interface GooglePayElement extends HTMLElement {
   googleTransactionState: { onSuccess: string, onError: string }
   googleEnvironment: string
 }
+
 @Component({
   selector: 'app-google-pay',
   standalone: true,

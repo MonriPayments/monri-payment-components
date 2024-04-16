@@ -1,4 +1,11 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {
+  GoogleTransactionInfo,
+  GooglePaymentDataRequest,
+  GoogleIsReadyToPayRequest,
+  GoogleErrorState,
+  GoogleTransactionState
+} from '../models/google-pay.models';
 
 declare var google: any;
 
@@ -9,13 +16,12 @@ declare var google: any;
   styleUrls: ['./google-pay.component.scss']
 })
 export class GooglePayComponent implements OnInit {
-
-  @Input() googleTransactionInfo: any
-  @Input() googlePaymentDataRequest: any
-  @Input() googleIsReadyToPayRequest: any
-  @Input() googleErrorState: any
-  @Input() googleTransactionState?: { onSuccess: string, onError: string }
-  @Input() googleEnvironment?: string
+  @Input() googleTransactionInfo!: GoogleTransactionInfo;
+  @Input() googlePaymentDataRequest!: GooglePaymentDataRequest;
+  @Input() googleIsReadyToPayRequest!: GoogleIsReadyToPayRequest;
+  @Input() googleErrorState!: GoogleErrorState;
+  @Input() googleTransactionState?: GoogleTransactionState;
+  @Input() googleEnvironment?: string;
 
   ngOnInit(): void {
     console.log(this.googleTransactionInfo)
