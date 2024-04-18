@@ -18,8 +18,18 @@ export const KeksPayStore = signalStore(
   }),
   withComputed(({ billid, cid, tid, store, amount }) => ({
     redirectUrl: computed(() => {
-      return 'https://kekspay.hr/pay?cid=' + cid() + '&tid=' + tid() + '&store=' + store() + '&bill_id=' + billid()
-        + '&amount=' + amount()
+      return (
+        'https://kekspay.hr/pay?cid=' +
+        cid() +
+        '&tid=' +
+        tid() +
+        '&store=' +
+        store() +
+        '&bill_id=' +
+        billid() +
+        '&amount=' +
+        amount()
+      );
     })
   })),
   withMethods((store, customEventService = inject(CustomEventService)) => ({

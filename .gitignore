@@ -10,6 +10,9 @@
 /node_modules
 npm-debug.log
 yarn-error.log
+/projects/apps/keks-pay-app/node_modules
+/projects/libs/keks-pay/node_modules
+/projects/libs/google-pay/node_modules
 
 # IDEs and editors
 .idea/

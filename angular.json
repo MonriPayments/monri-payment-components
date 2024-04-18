@@ -178,7 +178,7 @@
                   "maximumError": "4kb"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "none"
             },
             "development": {
               "optimization": false,
@@ -218,6 +218,121 @@
               "projects/showcase/src/assets"
             ],
             "styles": ["projects/showcase/src/styles.scss"],
+            "scripts": []
+          }
+        }
+      }
+    },
+    "google-pay": {
+      "projectType": "library",
+      "root": "projects/libs/google-pay",
+      "sourceRoot": "projects/libs/google-pay/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/libs/google-pay/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/libs/google-pay/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/libs/google-pay/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/libs/google-pay/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        }
+      }
+    },
+    "google-pay-app": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/apps/google-pay-app",
+      "sourceRoot": "projects/apps/google-pay-app/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/google-pay-app",
+            "index": "projects/apps/google-pay-app/src/index.html",
+            "browser": "projects/apps/google-pay-app/src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "projects/apps/google-pay-app/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "projects/apps/google-pay-app/src/favicon.ico",
+              "projects/apps/google-pay-app/src/assets"
+            ],
+            "styles": ["projects/apps/google-pay-app/src/styles.scss"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "none"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "google-pay-app:build:production"
+            },
+            "development": {
+              "buildTarget": "google-pay-app:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "buildTarget": "google-pay-app:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": ["zone.js", "zone.js/testing"],
+            "tsConfig": "projects/apps/google-pay-app/tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "projects/apps/google-pay-app/src/favicon.ico",
+              "projects/apps/google-pay-app/src/assets"
+            ],
+            "styles": ["projects/apps/google-pay-app/src/styles.scss"],
             "scripts": []
           }
         }
