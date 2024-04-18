@@ -1,12 +1,18 @@
 import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
 import {createCustomElement} from '@angular/elements';
 import {GooglePayComponent} from '../../../../../libs/google-pay/src/lib/google-pay.component';
+import {
+  GoogleErrorState,
+  GoogleIsReadyToPayRequest,
+  GooglePaymentDataRequest,
+  GoogleTransactionInfo
+} from "../../../../../libs/google-pay/src/models/google-pay.models";
 
 interface GooglePayElement extends HTMLElement {
-  googleTransactionInfo: any
-  googlePaymentDataRequest: any
-  googleIsReadyToPayRequest: any
-  googleErrorState: any
+  googleTransactionInfo: GoogleTransactionInfo
+  googlePaymentDataRequest: GooglePaymentDataRequest
+  googleIsReadyToPayRequest: GoogleIsReadyToPayRequest
+  googleErrorState: GoogleErrorState
   googleTransactionState: { onSuccess: string, onError: string }
   googleEnvironment: string
 }

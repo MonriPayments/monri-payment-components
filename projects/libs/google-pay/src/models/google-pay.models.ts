@@ -10,7 +10,20 @@ export interface GoogleTransactionInfo {
 export interface GooglePaymentDataRequest {
   apiVersion: number;
   apiVersionMinor: number;
-  allowedPaymentMethods: any[];
+  allowedPaymentMethods: {
+    type: string;
+    parameters: {
+      allowedAuthMethods: string[];
+      allowedCardNetworks: string[];
+    };
+    tokenizationSpecification: {
+      type: string;
+      parameters: {
+        gateway: string;
+        gatewayMerchantId: string;
+      };
+    };
+  }[];
   transactionInfo: GoogleTransactionInfo;
   merchantInfo: { merchantId: string, merchantName: string };
   callbackIntents: string[];
@@ -19,7 +32,13 @@ export interface GooglePaymentDataRequest {
 export interface GoogleIsReadyToPayRequest {
   apiVersion: number;
   apiVersionMinor: number;
-  allowedPaymentMethods: any[];
+  allowedPaymentMethods: {
+    type: string;
+    parameters: {
+      allowedAuthMethods: string[];
+      allowedCardNetworks: string[];
+    };
+  }[];
 }
 
 export interface GoogleErrorState {
