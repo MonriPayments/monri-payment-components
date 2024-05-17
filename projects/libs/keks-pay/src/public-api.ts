@@ -3,5 +3,6 @@
  */
 
 export * from './lib/keks-pay.component';
-export * from './lib/keks-pay.store';
+export * from './lib/services/keks-pay.service';
 export * from './lib/services/custom-event.service';
+export * from './lib/services/alternative-payment-method.interface';

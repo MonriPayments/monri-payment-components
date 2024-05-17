@@ -1,6 +1,5 @@
-import { Component, inject, Input } from '@angular/core';
-import { patchState } from '@ngrx/signals';
-import { KeksPayStore } from './keks-pay.store';
+import { Component, Input, OnInit } from '@angular/core';
+import { KeksPayService } from './services/keks-pay.service';
 import { QRCodeModule } from 'angularx-qrcode';
 import { CustomEventService } from './services/custom-event.service';
 
@@ -10,28 +9,19 @@ import { CustomEventService } from './services/custom-event.service';
   imports: [QRCodeModule],
   templateUrl: 'keks-pay.component.html',
   styleUrl: 'keks-pay.component.scss',
-  providers: [KeksPayStore, CustomEventService]
+  providers: [KeksPayService, CustomEventService]
 })
-export class KeksPayComponent {
-  readonly keksPayStore = inject(KeksPayStore);
+export class KeksPayComponent implements OnInit {
+  constructor(
+    public keksPayService: KeksPayService,
+    public customEventService: CustomEventService
+  ) {}
 
-  @Input() set billid(value: string) {
-    patchState(this.keksPayStore, { billid: value });
-  }
+  @Input() url = '';
 
-  @Input() set cid(value: string) {
-    patchState(this.keksPayStore, { cid: value });
-  }
-
-  @Input() set tid(value: string) {
-    patchState(this.keksPayStore, { tid: value });
-  }
-
-  @Input() set store(value: string) {
-    patchState(this.keksPayStore, { store: value });
-  }
-
-  @Input() set amount(value: number) {
-    patchState(this.keksPayStore, { amount: value });
+  ngOnInit(): void {
+    this.customEventService.dispatchEvent('componentService', KeksPayService);
+    (window as any).keksPay = this.keksPayService;
+    (window as any).keksPayService = KeksPayService;
   }
 }
