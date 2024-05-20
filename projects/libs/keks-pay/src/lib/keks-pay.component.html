@@ -1,16 +1,27 @@
 <div class="container">
-  @if (!isLoading()) {
-  <h1>{{ 'HEADING' | translate }}</h1>
-  <h3>{{ 'FIRST_STEP' | translate }}</h3>
-  <div class="container-icon-wrapper">
-    <h3>{{ 'SECOND_STEP_PREFIX' | translate }}</h3>
-    <div class="svg-container"></div>
-    <h3>{{ 'SECOND_STEP_SUFFIX' | translate }}</h3>
+  @if (isLoading()) {
+  <div class="container-loading-wrapper">
+    <div class="container-loading-wrapper-spinner"></div>
   </div>
-  <h3>{{ 'THIRD_STEP' | translate }}</h3>
-  <h3>{{ 'FORTH_STEP' | translate }}</h3>
-  <qrcode (click)="navigate()" [qrdata]="url()" [width]="180" />
+  } @else { @if (isMobileView()) {
+  <div class="container-mobile-view-redirect">
+    <p>{{ 'MOBILE_VIEW_REDIRECT_MESSAGE' | translate }}</p>
+    <button (click)="navigate()" class="container-mobile-view-redirect-button">
+      <p>{{ 'MOBILE_VIEW_REDIRECT' | translate }}</p>
+    </button>
+  </div>
   } @else {
-  <div class="container-spinner"></div>
-  }
+  <div class="container-qr">
+    <h1>{{ 'HEADING' | translate }}</h1>
+    <p>{{ 'FIRST_STEP' | translate }}</p>
+    <div class="container-qr-icon-wrapper">
+      <p>{{ 'SECOND_STEP_PREFIX' | translate }}</p>
+      <div class="container-qr-icon-wrapper-svg"></div>
+      <p>{{ 'SECOND_STEP_SUFFIX' | translate }}</p>
+    </div>
+    <p>{{ 'THIRD_STEP' | translate }}</p>
+    <p>{{ 'FORTH_STEP' | translate }}</p>
+    <qrcode [qrdata]="url()" [width]="140" [margin]="0" />
+  </div>
+  } }
 </div>

@@ -6,7 +6,12 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <body>
- <lib-keks-pay url="hamdija.com"></lib-keks-pay>
+ <lib-keks-pay inputParams="{
+      payment_method: 'keks-pay',
+      data: {
+        lang: 'en'
+      }
+    }"></lib-keks-pay>
  <script src="./dist/keks-pay-app/keks-pay-bundle.js" type="module"></script>
 </body>
 </html>

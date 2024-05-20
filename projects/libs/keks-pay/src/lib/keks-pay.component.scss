@@ -5,6 +5,14 @@
   font-weight: 300;
   font-style: normal;
 }
+
+$--keks-p-color: #595959;
+$--keks-h1-color: #6a6a6a;
+$--keks-spinner-border-color: #f3f3f3;
+$--keks-spinner-border-top-color: #3498db;
+$--keks-button-background-color: rgba(252, 245, 255, 1);
+$--keks-button--color: rgba(129, 50, 167, 1);
+
 h1,
 h2,
 h3,
@@ -14,38 +22,75 @@ textarea,
 input {
   font-family: ITC Avant Garde Gothic Std Demi, sans-serif;
 }
-h3 {
-  color: #595959;
-}
-h1 {
-  color: #6a6a6a;
-}
-.svg-container {
-  background-image: url('assets/logo/keks-pay-logo.svg');
-  width: 1.5rem;
-  height: 2.5rem;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-.container {
-  display: flex;
-  flex-direction: column;
-  width: 30rem;
 
-  &-spinner {
-    border: 16px solid #f3f3f3;
-    border-top: 16px solid #3498db;
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    margin: 100px auto;
+p {
+  color: $--keks-p-color;
+  margin: 0.8rem 0;
+}
+
+h1 {
+  color: $--keks-h1-color;
+  margin-bottom: 0.5rem;
+}
+
+.container {
+  width: fit-content;
+
+  &-qr {
+    width: 30rem;
+    display: flex;
+    flex-direction: column;
+
+    &-icon-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &-svg {
+        background-image: url('assets/logo/keks-pay-logo.svg');
+        width: 1.5rem;
+        height: 2.5rem;
+        background-repeat: no-repeat;
+        background-size: contain;
+      }
+    }
   }
 
-  &-icon-wrapper {
+  &-mobile-view-redirect {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    width: 100dvw;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+
+    &-button {
+      display: flex;
+      align-self: center;
+      background-color: $--keks-button-background-color;
+      cursor: pointer;
+      border-radius: 1rem;
+      border-color: transparent;
+      padding: 0.6rem;
+
+      p {
+        margin: 0;
+        color: $--keks-button--color;
+      }
+    }
+  }
+
+  &-loading-wrapper {
+    width: 15rem;
+
+    &-spinner {
+      border: 1rem solid $--keks-spinner-border-color;
+      border-top: 1rem solid $--keks-spinner-border-top-color;
+      border-radius: 50%;
+      width: 8rem;
+      height: 8rem;
+      animation: spin 2s linear infinite;
+      margin: 6rem auto;
+    }
   }
 }
 

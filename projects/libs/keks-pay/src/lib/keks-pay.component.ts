@@ -63,9 +63,7 @@ export class KeksPayComponent implements OnInit {
   }
 
   navigate() {
-    if (this.isMobileView()) {
-      window.open(this.url(), '_blank');
-    }
+    window.open(this.url(), '_blank');
   }
 
   get inputParams(): WritableSignal<StartPaymentRequest> {
