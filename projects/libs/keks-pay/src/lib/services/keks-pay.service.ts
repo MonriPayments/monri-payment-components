@@ -1,20 +1,33 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   AlternativePaymentMethodInterface,
-  StartPaymentMethodParams,
-  StartPaymentMethodResponse
+  StartPaymentRequest,
+  StartPaymentResponse
 } from './alternative-payment-method.interface';
+import { WebPayService } from './web-pay.service';
+import { delay, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class KeksPayService implements AlternativePaymentMethodInterface {
-  constructor() {}
+  private readonly _webPayService: WebPayService = inject(WebPayService);
 
   public startPayment(
-    params: StartPaymentMethodParams
-  ): Promise<StartPaymentMethodResponse> | null {
-    console.log(params, 'params');
-    return null;
+    params: StartPaymentRequest
+  ): Observable<StartPaymentResponse> {
+    return (
+      this.webPayService
+        .startPayment({
+          payment_method: params.payment_method,
+          data: params.data
+        })
+        // mock req
+        .pipe(delay(2000))
+    );
+  }
+
+  get webPayService(): WebPayService {
+    return this._webPayService;
   }
 }

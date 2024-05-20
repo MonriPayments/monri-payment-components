@@ -1,15 +1,15 @@
+import { Observable } from 'rxjs';
+
 export interface AlternativePaymentMethodInterface {
-  startPayment(
-    params: StartPaymentMethodParams
-  ): Promise<StartPaymentMethodResponse> | null;
+  startPayment(params: StartPaymentRequest): Observable<StartPaymentResponse>;
 }
 
-export type StartPaymentMethodParams = {
-  type: string;
-  data: Map<string, any>;
+export type StartPaymentRequest = {
+  payment_method: string;
+  data: { [k: string]: string };
 };
 
-export type StartPaymentMethodResponse = {
-  started: boolean;
-  message?: string;
+export type StartPaymentResponse = {
+  status: string;
+  qr_code_text?: string;
 };
