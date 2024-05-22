@@ -39,7 +39,7 @@ export class KeksPayComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize() {
-    this.resolution.set(window.innerWidth);
+    this.resolution = window.innerWidth;
   }
 
   ngOnInit(): void {

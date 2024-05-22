@@ -12,16 +12,22 @@
   </div>
   } @else {
   <div class="container-qr">
-    <h1>{{ 'HEADING' | translate }}</h1>
-    <p>{{ 'FIRST_STEP' | translate }}</p>
-    <div class="container-qr-icon-wrapper">
-      <p>{{ 'SECOND_STEP_PREFIX' | translate }}</p>
-      <div class="container-qr-icon-wrapper-svg"></div>
-      <p>{{ 'SECOND_STEP_SUFFIX' | translate }}</p>
+    <div class="container-qr-instruction">
+      <p>{{ 'FIRST_STEP' | translate }}</p>
+      <div class="container-qr-instruction-icon-wrapper">
+        <p>{{ 'SECOND_STEP_PREFIX' | translate }}</p>
+        <div class="container-qr-instruction-icon-wrapper-svg"></div>
+        <p>{{ 'SECOND_STEP_SUFFIX' | translate }}</p>
+      </div>
+      <p>{{ 'THIRD_STEP' | translate }}</p>
+      <p>{{ 'FORTH_STEP' | translate }}</p>
     </div>
-    <p>{{ 'THIRD_STEP' | translate }}</p>
-    <p>{{ 'FORTH_STEP' | translate }}</p>
-    <qrcode [qrdata]="url()" [width]="140" [margin]="0" />
+    <qrcode
+      [qrdata]="url()"
+      [colorDark]="'#9396A6'"
+      [width]="128"
+      [margin]="0"
+    />
   </div>
   } }
 </div>

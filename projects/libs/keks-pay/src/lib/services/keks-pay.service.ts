@@ -23,7 +23,7 @@ export class KeksPayService implements AlternativePaymentMethodInterface {
           data: params.data
         })
         // mock req
-        .pipe(delay(2000))
+        .pipe(delay(1000))
     );
   }
 

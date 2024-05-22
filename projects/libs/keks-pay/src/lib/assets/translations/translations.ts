@@ -1,6 +1,5 @@
 export const translations: { [key: string]: { [key: string]: string } } = {
   en: {
-    HEADING: 'Pay using KEKS Pay',
     FIRST_STEP: '1. Open KEKS Pay',
     SECOND_STEP_PREFIX: '2. Press',
     SECOND_STEP_SUFFIX: 'icon',
@@ -11,7 +10,6 @@ export const translations: { [key: string]: { [key: string]: string } } = {
       'QR code is only available in desktop resolution'
   },
   bs: {
-    HEADING: 'Plaćanje putem KEKS Paya',
     FIRST_STEP: '1. Otvori KEKS Pay',
     SECOND_STEP_PREFIX: '2. Pritisni',
     SECOND_STEP_SUFFIX: 'ikonicu',
