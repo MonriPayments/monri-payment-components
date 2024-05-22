@@ -1,7 +1,7 @@
 const path = require('path');
 module.exports = {
   entry: {
-    'keks-pay-bundle.js': [
+    'keks-pay-component.js': [
       path.resolve(
         __dirname,
         '../../../dist/keks-pay-app/browser/polyfills.js'

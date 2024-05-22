@@ -54,7 +54,7 @@ export class KeksPayComponent implements OnInit {
       .pipe(take(1))
       .subscribe(response => {
         if (response.status === 'approved') {
-          this.url.set(response.qr_code_text as string);
+          this.url = response.qr_code_text as string;
           this.isLoading = false;
         } else {
           throw new Error('An error occurred');
