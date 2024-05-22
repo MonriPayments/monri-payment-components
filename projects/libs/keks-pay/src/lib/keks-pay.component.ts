@@ -43,7 +43,7 @@ export class KeksPayComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    (window as any).keksPay = this.keksPayService;
+    window.keksPayService = this.keksPayService;
 
     if (this.inputParams().data['lang']) {
       this.translationService.setLanguage(this.inputParams().data['lang']);
@@ -108,5 +108,11 @@ export class KeksPayComponent implements OnInit {
 
   get translationService(): TranslationService {
     return this._translationService;
+  }
+}
+
+declare global {
+  interface Window {
+    keksPayService: KeksPayService;
   }
 }
