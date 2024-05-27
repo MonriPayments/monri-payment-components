@@ -1,6 +1,6 @@
-import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
-import { KeksPayComponent } from '../../../../../libs/keks-pay/src/lib/keks-pay.component';
-import { createCustomElement } from '@angular/elements';
+import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
+import {KeksPayComponent} from '../../../../../libs/keks-pay/src/lib/keks-pay.component';
+import {createCustomElement} from '@angular/elements';
 import {StartPaymentRequest} from "../../../../../libs/keks-pay/src/lib/services/alternative-payment-method.interface";
 
 interface KeksPayElement extends HTMLElement {
@@ -11,7 +11,8 @@ interface KeksPayElement extends HTMLElement {
   selector: 'app-keks-pay',
   standalone: true,
   imports: [KeksPayComponent],
-  template: ` <div id="keks-pay-component"></div>`
+  template: `
+    <div id="keks-pay-component"></div>`
 })
 export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
   readonly #injector = inject(Injector);

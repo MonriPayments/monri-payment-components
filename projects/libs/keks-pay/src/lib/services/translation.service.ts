@@ -1,15 +1,23 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, WritableSignal } from '@angular/core';
 import { translations } from '../assets/translations/translations';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
-  private currentLang = signal('bs');
+  private _currentLang = signal('bs');
 
   public setLanguage(lang: string): void {
-    this.currentLang.set(lang);
+    this._currentLang.set(lang);
   }
 
   public translate(key: string): string {
-    return translations[this.currentLang()][key] || key;
+    return translations[this._currentLang()][key] || key;
+  }
+
+  get currentLang(): WritableSignal<string> {
+    return this._currentLang;
+  }
+
+  set currentLang(value: WritableSignal<string>) {
+    this._currentLang = value;
   }
 }
