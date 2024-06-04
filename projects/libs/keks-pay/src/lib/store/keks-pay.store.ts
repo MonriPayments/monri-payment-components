@@ -8,10 +8,7 @@ import {
   withState
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import {
-  setPending,
-  withRequestStatus
-} from './request-status.feature';
+import { setPending, withRequestStatus } from './request-status.feature';
 import { KeksPayService } from '../services/keks-pay.service';
 import { TranslationService } from '../services/translation.service';
 import { Prettify } from '@ngrx/signals/src/ts-helpers';

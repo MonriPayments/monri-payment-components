@@ -1,7 +1,7 @@
 import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
 import {KeksPayComponent} from '../../../../../libs/keks-pay/src/lib/keks-pay.component';
 import {createCustomElement} from '@angular/elements';
-import {StartPaymentRequest} from "../../../../../libs/keks-pay/src/lib/services/alternative-payment-method.interface";
+import {StartPaymentRequest} from "../../../../../libs/keks-pay/src/lib/interfaces/alternative-payment-method.interface";
 
 interface KeksPayElement extends HTMLElement {
   inputParams: StartPaymentRequest;

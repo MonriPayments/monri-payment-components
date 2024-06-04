@@ -3,7 +3,7 @@ import {
   AlternativePaymentMethodInterface,
   StartPaymentRequest,
   StartPaymentResponse
-} from './alternative-payment-method.interface';
+} from '../interfaces/alternative-payment-method.interface';
 import { WebPayService } from './web-pay.service';
 import { delay, Observable } from 'rxjs';
 
