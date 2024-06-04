@@ -3,11 +3,7 @@ import { translations } from '../assets/translations/translations';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
-  private _currentLang = signal('bs');
-
-  public setLanguage(lang: string): void {
-    this._currentLang.set(lang);
-  }
+  private _currentLang = signal('ba-hr');
 
   public translate(key: string): string {
     return translations[this._currentLang()][key] || key;
@@ -17,7 +13,7 @@ export class TranslationService {
     return this._currentLang;
   }
 
-  set currentLang(value: WritableSignal<string>) {
-    this._currentLang = value;
+  set currentLang(value: string) {
+    this._currentLang.set(value);
   }
 }

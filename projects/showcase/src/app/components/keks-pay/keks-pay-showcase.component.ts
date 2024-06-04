@@ -12,7 +12,7 @@ interface KeksPayElement extends HTMLElement {
   standalone: true,
   imports: [KeksPayComponent],
   template: `
-    <div id="keks-pay-component"></div>`
+    <div style="width: 18rem; height: 7rem; padding: 0.5rem" id="keks-pay-component"></div>`
 })
 export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
   readonly #injector = inject(Injector);
@@ -32,7 +32,7 @@ export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
     keksPayElement.inputParams = {
       payment_method: 'keks-pay',
       data: {
-        lang: 'en'
+        lang: 'sl'
       }
     }
 

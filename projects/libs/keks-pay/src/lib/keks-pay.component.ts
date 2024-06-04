@@ -1,11 +1,9 @@
 import {
   Component,
-  computed,
   HostListener,
   inject,
   Input,
   OnInit,
-  Signal,
   signal,
   WritableSignal
 } from '@angular/core';
@@ -15,6 +13,9 @@ import { take } from 'rxjs';
 import { StartPaymentRequest } from './services/alternative-payment-method.interface';
 import { TranslationService } from './services/translation.service';
 import { TranslatePipe } from './pipes/translate.pipe';
+import { KeksPayStore } from './store/keks-pay.store';
+import { patchState } from '@ngrx/signals';
+import { setFulfilled } from './store/request-status.feature';
 
 @Component({
   selector: 'lib-keks-pay',
@@ -22,13 +23,9 @@ import { TranslatePipe } from './pipes/translate.pipe';
   imports: [QRCodeModule, TranslatePipe],
   templateUrl: 'keks-pay.component.html',
   styleUrl: 'keks-pay.component.scss',
-  providers: [KeksPayService, TranslationService]
+  providers: [KeksPayService, TranslationService, KeksPayStore]
 })
 export class KeksPayComponent implements OnInit {
-  private _isLoading = signal(true);
-  private _resolution = signal(window.innerWidth);
-  private _isMobileView = computed(() => this.resolution() <= 768);
-  private _url = signal('');
   private _inputParams = signal<StartPaymentRequest>({
     payment_method: '',
     data: {}
@@ -36,17 +33,16 @@ export class KeksPayComponent implements OnInit {
   private readonly _keksPayService: KeksPayService = inject(KeksPayService);
   private readonly _translationService: TranslationService =
     inject(TranslationService);
+  readonly keksPayStore = inject(KeksPayStore);
 
   @HostListener('window:resize', ['$event'])
   onResize() {
-    this.resolution = window.innerWidth;
+    patchState(this.keksPayStore, { resolution: window.innerWidth });
   }
 
   ngOnInit(): void {
-    window.keksPayService = this.keksPayService;
-
     if (this.inputParams().data['lang']) {
-      this.translationService.setLanguage(this.inputParams().data['lang']);
+      this.translationService.currentLang = this.inputParams().data['lang'];
     }
 
     this.keksPayService
@@ -54,16 +50,21 @@ export class KeksPayComponent implements OnInit {
       .pipe(take(1))
       .subscribe(response => {
         if (response.status === 'approved') {
-          this.url = response.qr_code_text as string;
-          this.isLoading = false;
+          const parsedQrText = JSON.parse(response.qr_text as string);
+
+          patchState(this.keksPayStore, {
+            qr_type: parsedQrText.qr_type,
+            cid: parsedQrText.cid,
+            tid: parsedQrText.tid,
+            bill_id: parsedQrText.bill_id,
+            amount: parsedQrText.amount,
+            currency: parsedQrText.currency
+          });
+          patchState(this.keksPayStore, setFulfilled());
         } else {
-          throw new Error('An error occurred');
+          throw new Error('Payment not approved');
         }
       });
-  }
-
-  navigate() {
-    window.open(this.url(), '_blank');
   }
 
   get inputParams(): WritableSignal<StartPaymentRequest> {
@@ -74,45 +75,11 @@ export class KeksPayComponent implements OnInit {
     this._inputParams.set(value);
   }
 
-  get url(): WritableSignal<string> {
-    return this._url;
-  }
-
-  get isLoading(): WritableSignal<boolean> {
-    return this._isLoading;
-  }
-
-  set isLoading(value: boolean) {
-    this._isLoading.set(value);
-  }
-
-  set url(value: string) {
-    this._url.set(value);
-  }
-
-  get isMobileView(): Signal<boolean> {
-    return this._isMobileView;
-  }
-
-  get resolution(): WritableSignal<number> {
-    return this._resolution;
-  }
-
-  set resolution(value: number) {
-    this._resolution.set(value);
-  }
-
   get keksPayService(): KeksPayService {
     return this._keksPayService;
   }
 
   get translationService(): TranslationService {
     return this._translationService;
-  }
-}
-
-declare global {
-  interface Window {
-    keksPayService: KeksPayService;
   }
 }

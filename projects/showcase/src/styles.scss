@@ -2,3 +2,13 @@
 body {
   margin: 0;
 }
+
+.max-size {
+  height: 6rem;
+  width: 6rem;
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 100%;
+}

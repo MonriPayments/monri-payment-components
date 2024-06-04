@@ -1,12 +1,15 @@
 <div class="container">
-  @if (isLoading()) {
+  @if (keksPayStore.isLoading()) {
   <div class="container-loading-wrapper">
     <div class="container-loading-wrapper-spinner"></div>
   </div>
-  } @else { @if (isMobileView()) {
+  } @else if (keksPayStore.isMobileView()) {
   <div class="container-mobile-view-redirect">
     <p>{{ 'MOBILE_VIEW_REDIRECT_MESSAGE' | translate }}</p>
-    <button (click)="navigate()" class="container-mobile-view-redirect-button">
+    <button
+      (click)="keksPayStore.mobileViewRedirect()"
+      class="container-mobile-view-redirect-button"
+    >
       <p>{{ 'MOBILE_VIEW_REDIRECT' | translate }}</p>
     </button>
   </div>
@@ -23,11 +26,11 @@
       <p>{{ 'FORTH_STEP' | translate }}</p>
     </div>
     <qrcode
-      [qrdata]="url()"
+      [qrdata]="keksPayStore.url()"
       [colorDark]="'#9396A6'"
-      [width]="133"
+      [cssClass]="'max-size'"
       [margin]="0"
     />
   </div>
-  } }
+  }
 </div>

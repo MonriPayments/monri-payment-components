@@ -11,5 +11,5 @@ export type StartPaymentRequest = {
 
 export type StartPaymentResponse = {
   status: string;
-  qr_code_text?: string;
+  qr_text?: string;
 };
