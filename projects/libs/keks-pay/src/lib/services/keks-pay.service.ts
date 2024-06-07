@@ -16,15 +16,10 @@ export class KeksPayService implements AlternativePaymentMethodInterface {
   public startPayment(
     params: StartPaymentRequest
   ): Observable<StartPaymentResponse> {
-    return (
-      this.webPayService
-        .startPayment({
-          payment_method: params.payment_method,
-          data: params.data
-        })
-        // mock req
-        .pipe(delay(1000))
-    );
+    return this.webPayService.startPayment({
+      payment_method: params.payment_method,
+      data: params.data
+    });
   }
 
   get webPayService(): WebPayService {

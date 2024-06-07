@@ -32,7 +32,8 @@ export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
     keksPayElement.inputParams = {
       payment_method: 'keks-pay',
       data: {
-        lang: 'sl'
+        lang: 'sl',
+        trx_token: '3205957320507259075327509273'
       }
     }
 

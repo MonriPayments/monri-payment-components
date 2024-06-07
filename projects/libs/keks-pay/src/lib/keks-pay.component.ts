@@ -49,21 +49,14 @@ export class KeksPayComponent implements OnInit {
       .startPayment(this.inputParams())
       .pipe(take(1))
       .subscribe(response => {
-        if (response.status === 'approved') {
-          const parsedQrText = JSON.parse(response.qr_text as string);
-
-          patchState(this.keksPayStore, {
-            qr_type: parsedQrText.qr_type,
-            cid: parsedQrText.cid,
-            tid: parsedQrText.tid,
-            bill_id: parsedQrText.bill_id,
-            amount: parsedQrText.amount,
-            currency: parsedQrText.currency
-          });
-          patchState(this.keksPayStore, setFulfilled());
-        } else {
-          throw new Error('Payment not approved');
-        }
+        const parsedQrText = response.qr_text as any;
+        patchState(this.keksPayStore, {
+          cid: parsedQrText.cid,
+          tid: parsedQrText.tid,
+          bill_id: parsedQrText.bill_id,
+          amount: parsedQrText.amount,
+        });
+        patchState(this.keksPayStore, setFulfilled());
       });
   }
 

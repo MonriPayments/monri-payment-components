@@ -23,18 +23,14 @@ export const KeksPayStore = signalStore(
     bill_id: '',
     cid: '',
     tid: '',
-    qr_type: '',
     amount: '',
-    currency: '',
     resolution: window.innerWidth
   }),
   withRequestStatus(),
   withComputed(store => ({
     url: computed(() => {
       return (
-        'https://kekspay.hr/pay?' +
-        'qr_type=' +
-        store.qr_type() +
+        'https://kekspay.hr/galebpay?' +
         '&cid=' +
         store.cid() +
         '&tid=' +
@@ -42,9 +38,7 @@ export const KeksPayStore = signalStore(
         '&bill_id=' +
         store.bill_id() +
         '&amount=' +
-        store.amount() +
-        '&currency=' +
-        store.currency()
+        store.amount()
       );
     }),
     isMobileView: computed(() => store.resolution() <= 768),
