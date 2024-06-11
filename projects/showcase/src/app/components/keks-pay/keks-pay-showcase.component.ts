@@ -33,7 +33,8 @@ export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
       payment_method: 'keks-pay',
       data: {
         lang: 'sl',
-        trx_token: '3205957320507259075327509273'
+        trx_token: '3205957320507259075327509273',
+        environment: 'galebpay'
       }
     }
 

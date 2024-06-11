@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import {Observable} from 'rxjs';
 
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): Observable<StartPaymentResponse>;
@@ -10,6 +10,16 @@ export type StartPaymentRequest = {
 };
 
 export type StartPaymentResponse = {
-  status: string;
-  qr_text?: string;
+  status: string,
+  product: string,
+  acquirer: string,
+  input_timeout: number,
+  qr_text: {
+    qr_type: string,
+    cid: string,
+    tid: string,
+    bill_id: number,
+    amount: string,
+    currency: string
+  }
 };

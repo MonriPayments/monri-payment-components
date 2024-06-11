@@ -10,14 +10,15 @@ import {
 export class WebPayService {
   private readonly _httpClient: HttpClient = inject(HttpClient);
 
-  startPayment(req: StartPaymentRequest): Observable<any> {
+  startPayment(req: StartPaymentRequest): Observable<StartPaymentResponse> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    //TODO: remove localhost
-    return this.httpClient.post(
-      `http://localhost:3000/v2/direct-payment/keks-pay-hr/${req.data['trx_token']}/start-payment`,
+    // url had http://localhost:3000 at the start, but should work without it
+    // add it if the post is not successful (only in test env)
+    return this.httpClient.post<StartPaymentResponse>(
+      `/v2/direct-payment/keks-pay-hr/${req.data['trx_token']}/start-payment`,
       JSON.stringify({}),
       { headers }
     );

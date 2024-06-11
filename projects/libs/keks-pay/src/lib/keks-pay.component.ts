@@ -4,8 +4,6 @@ import {
   inject,
   Input,
   OnInit,
-  signal,
-  WritableSignal
 } from '@angular/core';
 import { KeksPayService } from './services/keks-pay.service';
 import { QRCodeModule } from 'angularx-qrcode';
@@ -26,10 +24,6 @@ import { setFulfilled } from './store/request-status.feature';
   providers: [KeksPayService, TranslationService, KeksPayStore]
 })
 export class KeksPayComponent implements OnInit {
-  private _inputParams = signal<StartPaymentRequest>({
-    payment_method: '',
-    data: {}
-  });
   private readonly _keksPayService: KeksPayService = inject(KeksPayService);
   private readonly _translationService: TranslationService =
     inject(TranslationService);
@@ -41,31 +35,44 @@ export class KeksPayComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.inputParams().data['lang']) {
-      this.translationService.currentLang = this.inputParams().data['lang'];
-    }
+    this.setComponentOptions();
+    this.startPayment();
+  }
 
+  private startPayment() {
     this.keksPayService
-      .startPayment(this.inputParams())
+      .startPayment(this.keksPayStore.inputParams())
       .pipe(take(1))
       .subscribe(response => {
-        const parsedQrText = response.qr_text as any;
         patchState(this.keksPayStore, {
-          cid: parsedQrText.cid,
-          tid: parsedQrText.tid,
-          bill_id: parsedQrText.bill_id,
-          amount: parsedQrText.amount,
+          cid: response.qr_text.cid,
+          tid: response.qr_text.tid,
+          //TODO: change bill_id to number and test
+          bill_id: response.qr_text.bill_id.toString(),
+          amount: response.qr_text.amount
         });
         patchState(this.keksPayStore, setFulfilled());
       });
   }
 
-  get inputParams(): WritableSignal<StartPaymentRequest> {
-    return this._inputParams;
+  private setComponentOptions() {
+    if (this.keksPayStore.inputParams().data['lang']) {
+      this.translationService.currentLang = this.keksPayStore.inputParams().data['lang'];
+    } else {
+      throw new Error(this.translationService.translate('LANG_NOT_SET'));
+    }
+
+    if (this.keksPayStore.inputParams().data['environment']) {
+      patchState(this.keksPayStore, {
+        environment: this.keksPayStore.inputParams().data['environment']
+      });
+    } else {
+      throw new Error(this.translationService.translate('ENV_NOT_SET'));
+    }
   }
 
   @Input() set inputParams(value: StartPaymentRequest) {
-    this._inputParams.set(value);
+    patchState(this.keksPayStore, {inputParams: value});
   }
 
   get keksPayService(): KeksPayService {
