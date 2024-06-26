@@ -7,11 +7,11 @@ import {
   withMethods,
   withState
 } from '@ngrx/signals';
-import { computed, inject } from '@angular/core';
-import { setPending, withRequestStatus } from './request-status.feature';
-import { KeksPayService } from '../services/keks-pay.service';
-import { TranslationService } from '../services/translation.service';
-import { Prettify } from '@ngrx/signals/src/ts-helpers';
+import {computed, inject} from '@angular/core';
+import {setPending, withRequestStatus} from './request-status.feature';
+import {KeksPayService} from '../services/keks-pay.service';
+import {TranslationService} from '../services/translation.service';
+import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {
   MethodsDictionary,
   SignalsDictionary,
@@ -40,6 +40,8 @@ export const KeksPayStore = signalStore(
         'https://kekspay.hr/' +
         store.environment() +
         '?' +
+        '&qr_type=' +
+        store.qr_type() +
         '&cid=' +
         store.cid() +
         '&tid=' +
