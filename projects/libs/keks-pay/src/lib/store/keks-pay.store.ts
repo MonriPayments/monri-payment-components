@@ -21,6 +21,7 @@ import {StartPaymentRequest} from "../interfaces/alternative-payment-method.inte
 
 export const KeksPayStore = signalStore(
   withState({
+    qr_type: '1',
     bill_id: '',
     cid: '',
     tid: '',

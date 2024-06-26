@@ -45,6 +45,7 @@ export class KeksPayComponent implements OnInit {
       .pipe(take(1))
       .subscribe(response => {
         patchState(this.keksPayStore, {
+          qr_type: '1',
           cid: response.qr_text.cid,
           tid: response.qr_text.tid,
           //TODO: change bill_id to number and test
