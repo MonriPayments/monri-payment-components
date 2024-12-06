@@ -30,12 +30,11 @@ export class KeksPayShowcaseComponent implements OnInit, OnDestroy {
       'lib-keks-pay'
     ) as KeksPayElement;
     keksPayElement.inputParams = {
-      payment_method: 'keks-pay',
       data: {
-        lang: 'sl',
-        trx_token: '3205957320507259075327509273',
-        environment: 'galebpay'
-      }
+        lang: 'en'
+      },
+      payment_method: 'keks-pay',
+      is_test: true
     }
 
     const keksPayComponent = document.getElementById('keks-pay-component');

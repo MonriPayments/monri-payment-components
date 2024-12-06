@@ -17,7 +17,7 @@ import {
   SignalsDictionary,
   SignalStoreSlices
 } from '@ngrx/signals/src/signal-store-models';
-import {StartPaymentRequest} from "../interfaces/alternative-payment-method.interface";
+import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 
 export const KeksPayStore = signalStore(
   withState({
@@ -34,8 +34,12 @@ export const KeksPayStore = signalStore(
   }),
   withRequestStatus(),
   withComputed(store => ({
-    url: computed(
-      () =>
+    url: computed(() => {
+      if (store.inputParams().is_test) {
+        return 'https://monri.com';
+      }
+
+      return (
         'https://kekspay.hr/' +
         store.environment() +
         '?' +
@@ -47,7 +51,8 @@ export const KeksPayStore = signalStore(
         store.bill_id() +
         '&amount=' +
         store.amount()
-    ),
+      );
+    }),
     isMobileView: computed(() => store.resolution() <= 768),
     isLoading: computed(() => store.isPending())
   })),
@@ -79,6 +84,13 @@ declare global {
   interface Window {
     keksPayService: KeksPayService;
     translationService: TranslationService;
-    keksPayStore: Prettify<SignalStoreSlices<object> & SignalsDictionary & MethodsDictionary & StateSignal<object>> | unknown;
+    keksPayStore:
+      | Prettify<
+          SignalStoreSlices<object> &
+            SignalsDictionary &
+            MethodsDictionary &
+            StateSignal<object>
+        >
+      | unknown;
   }
 }

@@ -1,10 +1,4 @@
-import {
-  Component,
-  HostListener,
-  inject,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
 import { KeksPayService } from './services/keks-pay.service';
 import { QRCodeModule } from 'angularx-qrcode';
 import { take } from 'rxjs';
@@ -57,10 +51,13 @@ export class KeksPayComponent implements OnInit {
 
   private setComponentOptions() {
     if (this.keksPayStore.inputParams().data['lang']) {
-      this.translationService.currentLang = this.keksPayStore.inputParams().data['lang'];
+      this.translationService.currentLang =
+        this.keksPayStore.inputParams().data['lang'];
     } else {
       throw new Error(this.translationService.translate('LANG_NOT_SET'));
     }
+
+    if (this.keksPayStore.inputParams().is_test) return;
 
     if (this.keksPayStore.inputParams().data['environment']) {
       patchState(this.keksPayStore, {
@@ -72,7 +69,7 @@ export class KeksPayComponent implements OnInit {
   }
 
   @Input() set inputParams(value: StartPaymentRequest) {
-    patchState(this.keksPayStore, {inputParams: value});
+    patchState(this.keksPayStore, { inputParams: value });
   }
 
   get keksPayService(): KeksPayService {
