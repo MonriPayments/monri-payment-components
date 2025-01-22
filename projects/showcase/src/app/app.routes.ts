@@ -24,6 +24,13 @@ export const routes: Routes = [
           import('./components/google-pay/google-pay-showcase.component').then(
             x => x.GooglePayShowcaseComponent
           )
+      },
+      {
+        path: 'apple-pay',
+        loadComponent: () =>
+          import('./components/apple-pay/apple-pay-showcase.component').then(
+            x => x.ApplePayShowcaseComponent
+          )
       }
     ]
   }
