@@ -1,5 +1,5 @@
 import {Component, ElementRef, Input, OnInit, Renderer2} from '@angular/core';
-import {ApplePayButtonConfig} from "../models/apple-pay.models";
+import {ApplePayButtonConfig} from "./models/apple-pay.models";
 
 @Component({
   selector: 'lib-apple-pay',

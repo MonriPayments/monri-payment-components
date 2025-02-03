@@ -1,7 +1,7 @@
 import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
 import {createCustomElement} from "@angular/elements";
 import {ApplePayComponent} from "../../../../../libs/apple-pay/src/lib/apple-pay.component";
-import {ApplePayButtonConfig} from "../../../../../libs/apple-pay/src/models/apple-pay.models";
+import { ApplePayButtonConfig } from '../../../../../libs/apple-pay/src/lib/models/apple-pay.models';
 
 interface ApplePayElement extends HTMLElement {
   inputParams: ApplePayButtonConfig;
