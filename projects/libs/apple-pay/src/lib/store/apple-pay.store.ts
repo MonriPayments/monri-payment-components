@@ -140,8 +140,7 @@ export const ApplePayStore = signalStore(
             }
             const setWindowServices = () => {
                 window.applePayStore = store;
-                // window.applePayService = applePayService;
-                // window.translationService = translationService;
+                window.applePayService = applePayService;
             }
 
             return {
@@ -172,8 +171,7 @@ export const ApplePayStore = signalStore(
 
 declare global {
     interface Window {
-        // applePayService: KeksPayService;
-        // translationService: TranslationService;
+        applePayService: ApplePayService;
         applePayStore:
             | Prettify<
             SignalStoreSlices<object> &
