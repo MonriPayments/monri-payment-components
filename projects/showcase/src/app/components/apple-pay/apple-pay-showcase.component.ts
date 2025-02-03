@@ -1,10 +1,10 @@
 import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
 import {createCustomElement} from "@angular/elements";
 import {ApplePayComponent} from "../../../../../libs/apple-pay/src/lib/apple-pay.component";
-import { ApplePayButtonConfig } from '../../../../../libs/apple-pay/src/lib/models/apple-pay.models';
+import {StartPaymentRequest} from "apple-pay";
 
 interface ApplePayElement extends HTMLElement {
-  inputParams: ApplePayButtonConfig;
+  inputParams: StartPaymentRequest;
 }
 
 @Component({
@@ -29,12 +29,10 @@ export class ApplePayShowcaseComponent implements OnInit, OnDestroy {
 
     const applePayElement = document.createElement('lib-apple-pay') as ApplePayElement;
     applePayElement.inputParams = {
-      countryCode: 'HR',
-      currencyCode: 'EUR',
-      supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
-      merchantCapabilities: ['supports3DS'],
-      totalLabel: 'Parkmatix',
-      totalAmount: '5.00'
+      payment_method: 'apple-pay',
+      data: {buttonStyle: "white", buttonType: "buy", locale: "hr"},
+      is_test: false,
+
     }
     const applePayComponent = document.getElementById('apple-pay-component');
 

@@ -1,22 +1,32 @@
-import {Component, ElementRef, Input, OnInit, Renderer2} from '@angular/core';
+import {Component, effect, ElementRef, inject, Input, OnInit, Renderer2} from '@angular/core';
 import {ApplePayButtonConfig} from "./models/apple-pay.models";
+import {patchState} from "@ngrx/signals";
+import {ApplePayStore} from "./store/apple-pay.store";
+import {StartPaymentRequest} from "./interfaces/alternative-payment-method.interface";
+import {ApplePayService} from "./services/apple-pay.service";
 
 @Component({
   selector: 'lib-apple-pay',
   templateUrl: './apple-pay.component.html',
   standalone: true,
-  styleUrls: ['./apple-pay.component.scss']
+  styleUrls: ['./apple-pay.component.scss'],
+  providers: [ApplePayStore, ApplePayService],
 })
 export class ApplePayComponent implements OnInit {
 
   appleInputParams: ApplePayButtonConfig | undefined = undefined;
 
-  @Input() set inputParams(value: ApplePayButtonConfig) {
-    console.log(value, "Value:")
-    this.appleInputParams = value
+  protected readonly applePayStore = inject(ApplePayStore)
+
+  @Input() set inputParams(value: StartPaymentRequest) {
+    patchState(this.applePayStore, {inputParams: value});
+    console.log("Proba", this.applePayStore.inputParams());
   }
 
   constructor(private renderer: Renderer2, private el: ElementRef) {
+    effect(() => {
+      console.log("Proba", this.applePayStore.inputParams());
+    });
   }
 
   ngOnInit(): void {
@@ -39,9 +49,9 @@ export class ApplePayComponent implements OnInit {
   private createApplePayButton(): void {
     const applePayButton = this.renderer.createElement('apple-pay-button');
     this.renderer.setAttribute(applePayButton, 'id', 'apple-pay-button');
-    this.renderer.setAttribute(applePayButton, 'buttonstyle', this.appleInputParams?.buttonStyle || 'black');
-    this.renderer.setAttribute(applePayButton, 'type', this.appleInputParams?.buttonType || 'buy');
-    this.renderer.setAttribute(applePayButton, 'locale', this.appleInputParams?.locale || 'en-US');
+    this.renderer.setAttribute(applePayButton, 'buttonstyle', this.applePayStore.appleButtonStyle().buttonStyle || 'black');
+    this.renderer.setAttribute(applePayButton, 'type', this.applePayStore.appleButtonStyle().buttonType || 'buy');
+    this.renderer.setAttribute(applePayButton, 'locale', this.applePayStore.appleButtonStyle().locale || 'en-US');
 
     this.renderer.appendChild(
       this.el.nativeElement.querySelector('#container'),
