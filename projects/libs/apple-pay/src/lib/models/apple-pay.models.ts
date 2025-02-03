@@ -1,6 +1,6 @@
-export interface ApplePayButtonConfig {
-  buttonStyle?: 'black' | 'white' | 'white-outline';
-  buttonType?:
+export interface ApplePayButtonStyle {
+  buttonStyle: 'black' | 'white' | 'white-outline';
+  buttonType:
     | 'plain'
     | 'buy'
     | 'donate'
@@ -15,11 +15,16 @@ export interface ApplePayButtonConfig {
     | 'support'
     | 'contribute'
     | 'tip';
-  locale?: string;
+  locale: string;
+}
+
+export interface ApplePayButtonConfig {
   countryCode: string;
   currencyCode: string;
-  totalLabel: string;
-  totalAmount: string;
-  supportedNetworks?: string[];
-  merchantCapabilities?: string[];
+  total: {
+    label: string;
+    amount: string
+  };
+  supportedNetworks: string[];
+  merchantCapabilities: string[];
 }
