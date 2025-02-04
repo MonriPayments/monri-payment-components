@@ -23,7 +23,7 @@ export interface ApplePayButtonConfig {
   currencyCode: string;
   total: {
     label: string;
-    amount: string
+    amount: string;
   };
   supportedNetworks: string[];
   merchantCapabilities: string[];

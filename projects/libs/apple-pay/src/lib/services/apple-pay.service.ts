@@ -5,7 +5,7 @@ import {
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
 import {WebPayService} from './web-pay.service';
-import {Observable, of} from 'rxjs';
+import {Observable} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -16,10 +16,9 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
   public startPayment(
     params: StartPaymentRequest
   ): Observable<StartPaymentResponse> {
-
     return this.webPayService.startPayment({
       payment_method: params.payment_method,
-      data: params.data,
+      data: params.data
     });
   }
 
