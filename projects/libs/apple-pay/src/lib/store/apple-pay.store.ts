@@ -5,8 +5,9 @@ import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {StartPaymentRequest} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
-import {catchError, of, take, tap} from 'rxjs';
+import {catchError, concatMap, of, pipe, switchMap, take, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
+import {rxMethod} from "@ngrx/signals/rxjs-interop";
 
 export const ApplePayStore = signalStore(
   withState({
@@ -100,6 +101,7 @@ export const ApplePayStore = signalStore(
           .startPayment(store.inputParams())
           .pipe(take(1))
           .subscribe(response => {
+            console.log("Response:", response)
             request.countryCode = store.appleButtonConfig()?.countryCode || 'HR';
             request.currencyCode = store.appleButtonConfig()?.currencyCode || 'EUR';
             request.supportedNetworks = store.appleButtonConfig()?.supportedNetworks || ['visa', 'masterCard', 'amex', 'discover'];
@@ -164,18 +166,6 @@ export const ApplePayStore = signalStore(
     onInit(store) {
       patchState(
         store,
-        {
-          appleButtonConfig: {
-            countryCode: 'HR',
-            currencyCode: 'EUR',
-            supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
-            merchantCapabilities: ['supports3DS'],
-            total: {
-              label: 'Parkmatix',
-              amount: '2.00'
-            }
-          }
-        },
         setPending()
       );
       store.onLoad();
