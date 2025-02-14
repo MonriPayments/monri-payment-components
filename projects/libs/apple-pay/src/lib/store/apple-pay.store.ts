@@ -5,7 +5,7 @@ import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {StartPaymentRequest} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
-import {take} from 'rxjs';
+import {catchError, of, take, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
 
 export const ApplePayStore = signalStore(
@@ -66,28 +66,40 @@ export const ApplePayStore = signalStore(
         };
 
         const session = new (window as any).ApplePaySession(3, request);
+
         session.onvalidatemerchant = (event: { validationURL: string }) => {
-          fetch('/v2/validate-merchant', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({validationURL: event.validationURL})
-          })
-            .then(response => response.json())
-            .then(merchantSession => {
-              session.completeMerchantValidation(merchantSession);
+          applePayService.validateMerchant(event.validationURL).pipe(
+            tap((response) => session.completeMerchantValidation(response)),
+            catchError((error) => {
+              console.error('Error validating merchant:', error);
+              session.abort();
+              return of(null);
             })
-            .catch(error => {
-              console.error('Error fetching merchant session:', error);
-            });
+          ).subscribe();
         };
 
+        session.onpaymentauthorized = (event: any) => {
+          return new Promise((resolve) => {
+            applePayService.newTransaction(event.payment.token).pipe(
+              tap((response) => {
+                session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+                resolve(response);
+              }),
+              catchError((error) => {
+                console.error("Error processing Apple Pay:", error);
+                session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+                resolve(null);
+                return of(null);
+              })
+            ).subscribe();
+          });
+        };
         session.begin();
 
         applePayService
           .startPayment(store.inputParams())
           .pipe(take(1))
           .subscribe(response => {
-            console.log('Response:', response);
             request.countryCode = store.appleButtonConfig()?.countryCode || 'HR';
             request.currencyCode = store.appleButtonConfig()?.currencyCode || 'EUR';
             request.supportedNetworks = store.appleButtonConfig()?.supportedNetworks || ['visa', 'masterCard', 'amex', 'discover'];
@@ -96,9 +108,8 @@ export const ApplePayStore = signalStore(
               label: store.appleButtonConfig()?.total.label || 'Parkmatix',
               amount: store.appleButtonConfig()?.total.amount || '1.50'
             };
-
-            console.log('Updated Request:', request);
           });
+
       };
 
 
@@ -175,6 +186,7 @@ export const ApplePayStore = signalStore(
 
 declare global {
   interface Window {
+    ApplePaySession?: any;
     applePayService: ApplePayService;
     applePayStore:
       | Prettify<

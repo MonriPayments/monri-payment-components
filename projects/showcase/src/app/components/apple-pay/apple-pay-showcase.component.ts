@@ -32,7 +32,7 @@ export class ApplePayShowcaseComponent implements OnInit, OnDestroy {
     const applePayElement = document.createElement('lib-apple-pay') as ApplePayElement;
     applePayElement.inputParams = {
       payment_method: 'apple-pay',
-      data: {buttonStyle: "white", buttonType: "buy", locale: "hr"},
+      data: {buttonStyle: "black", buttonType: "donate", locale: "en"},
       is_test: false,
 
     }

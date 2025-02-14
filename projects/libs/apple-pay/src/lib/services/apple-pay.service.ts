@@ -13,6 +13,10 @@ import {Observable} from 'rxjs';
 export class ApplePayService implements AlternativePaymentMethodInterface {
   private readonly _webPayService: WebPayService = inject(WebPayService);
 
+  get webPayService(): WebPayService {
+    return this._webPayService;
+  }
+
   public startPayment(
     params: StartPaymentRequest
   ): Observable<StartPaymentResponse> {
@@ -22,7 +26,17 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
     });
   }
 
-  get webPayService(): WebPayService {
-    return this._webPayService;
+  public validateMerchant(
+    params: any
+  ): Observable<any> {
+    return this.webPayService.validateMerchant({
+      validation_url: params.validation_url,
+    });
+  }
+
+  public newTransaction(
+    params: any
+  ): Observable<any> {
+    return this.webPayService.newTransaction(params);
   }
 }
