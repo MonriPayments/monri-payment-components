@@ -12,7 +12,7 @@ interface GooglePayElement extends HTMLElement {
   googleTransactionInfo: GoogleTransactionInfo
   googlePaymentDataRequest: GooglePaymentDataRequest
   googleIsReadyToPayRequest: GoogleIsReadyToPayRequest
-  googleErrorState: GoogleErrorState
+  googleErrorState?: GoogleErrorState
   googleTransactionState: { onSuccess: string, onError: string }
   googleEnvironment: string
 }
@@ -22,7 +22,7 @@ interface GooglePayElement extends HTMLElement {
   standalone: true,
   imports: [GooglePayComponent],
   template: `
-      <div id="google-pay-component"></div>`
+    <div id="google-pay-component"></div>`
 })
 export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
   readonly #injector = inject(Injector);
@@ -37,7 +37,7 @@ export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
     }
 
     const googlePayElement = document.createElement('lib-google-pay') as GooglePayElement;
-    this.getGoogleInputParametars(googlePayElement);
+    this.getGoogleInputParameters(googlePayElement);
 
     const googlePayComponent = document.getElementById('google-pay-component');
     googlePayComponent!.appendChild(googlePayElement);
@@ -49,7 +49,7 @@ export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getGoogleInputParametars(googlePayElement: GooglePayElement) {
+  private getGoogleInputParameters(googlePayElement: GooglePayElement) {
     const googleTransactionInfo = {
       displayItems: [
         {
@@ -102,7 +102,7 @@ export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
         merchantId: 'BCR2DN4TQHE6DYLO',
         merchantName: 'Harun'
       },
-      callbackIntents: ['PAYMENT_AUTHORIZATION']
+      // callbackIntents: ['PAYMENT_AUTHORIZATION']
     };
 
     const baseCardPaymentMethod = {
@@ -118,7 +118,7 @@ export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
       allowedPaymentMethods: [baseCardPaymentMethod]
     };
     googlePayElement.googleErrorState = {
-      intent: 'PAYMENT_AUTHORIZATION',
+      // intent: 'PAYMENT_AUTHORIZATION',
       message:
         'Insufficient funds, try again. Next attempt should work.',
       reason: 'PAYMENT_DATA_INVALID'

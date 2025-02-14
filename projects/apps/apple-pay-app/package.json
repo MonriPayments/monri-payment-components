@@ -1,0 +1,5 @@
+{
+  "name": "apple-pay-app",
+  "version": "0.0.1",
+  "main": "apple-pay-bundle.js"
+}

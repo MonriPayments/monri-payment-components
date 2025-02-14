@@ -50,18 +50,23 @@ export class GooglePayComponent implements OnInit {
   }
 
   getGooglePaymentsClient() {
+    console.log("Environment:", this.googleEnvironment);
     return new google.payments.api.PaymentsClient({
       environment: this.googleEnvironment,
-      paymentDataCallbacks: {
+      // paymentDataCallbacks: {
         onPaymentAuthorized: (paymentData: any) =>
           this.onPaymentAuthorized(paymentData)
-      }
+      // }
     });
   }
 
   onPaymentAuthorized(paymentData: any) {
     return new Promise((resolve, reject) => {
       // handle the response
+      console.log("Protocol Version:", paymentData.protocolVersion);
+      console.log("Signature:", paymentData.signature);
+      console.log("Intermediate Signing Key:", paymentData.intermediateSigningKey);
+      console.log("Signed Message:", paymentData.signedMessage);
       this.processPayment(paymentData)
         .then(() => {
           console.log('Payment successful!');
