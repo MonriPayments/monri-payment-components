@@ -17,7 +17,7 @@ export class WebPayService {
     });
 
     return this.httpClient.post<StartPaymentResponse>(
-      `/v2/direct-payment/apple-pay/${req.data['trx_token']}/start-payment`,
+      `/v2/apple-pay/${req.data['trx_token']}/start-payment`,
       JSON.stringify({}),
       {headers}
     );

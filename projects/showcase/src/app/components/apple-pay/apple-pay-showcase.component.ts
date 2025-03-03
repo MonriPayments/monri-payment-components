@@ -1,9 +1,7 @@
 import {Component, inject, Injector, OnDestroy, OnInit} from '@angular/core';
 import {createCustomElement} from "@angular/elements";
 import {ApplePayComponent} from "../../../../../libs/apple-pay/src/lib/apple-pay.component";
-import {
-  StartPaymentRequest
-} from "../../../../../libs/keks-pay/src/lib/interfaces/alternative-payment-method.interface";
+import {StartPaymentRequest} from "../../../../../libs/apple-pay/src/lib/interfaces/alternative-payment-method.interface";
 
 interface ApplePayElement extends HTMLElement {
   inputParams: StartPaymentRequest;

@@ -1,5 +1,3 @@
-import {Observable} from 'rxjs';
-
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): any;
 }
@@ -16,6 +14,11 @@ export type StartPaymentResponse = {
   product: string;
   acquirer: string;
   input_timeout: number;
+  country_code: string;
+  currency_code: string;
+  supported_networks: string[];
+  merchant_capabilities: string[];
+  total: { label: string; amount: string; };
 };
 
 export type ValidateMerchantRequest = {
