@@ -1,12 +1,15 @@
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): any;
+
+  validateMerchant(params: MerchantValidateRequest): any;
+
+  newTransaction(params: NewCardTransactionRequest): any;
 }
 
 export type StartPaymentRequest = {
   payment_method: string;
   is_test?: boolean;
   data: { [k: string]: string };
-  validation_url?: string;
 };
 
 export type StartPaymentResponse = {
@@ -21,14 +24,16 @@ export type StartPaymentResponse = {
   total: { label: string; amount: string; };
 };
 
-export type ValidateMerchantRequest = {
+export type MerchantValidateRequest = {
   data: { [k: string]: string };
   validation_url: string;
+  initiative_context: any;
 };
 
 export type NewCardTransactionRequest = {
   transaction: {
-    payment_method_type: string | 'apple-pay',
-    payment_method_data: any
-  }
-}
+    data: { [k: string]: string };
+    payment_method_type: any;
+    payment_method_data: any;
+  },
+};

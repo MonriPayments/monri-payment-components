@@ -1,6 +1,8 @@
 import {inject, Injectable} from '@angular/core';
 import {
   AlternativePaymentMethodInterface,
+  MerchantValidateRequest,
+  NewCardTransactionRequest,
   StartPaymentRequest,
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
@@ -27,15 +29,17 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
   }
 
   public validateMerchant(
-    params: any
+    params: MerchantValidateRequest
   ): Observable<any> {
     return this.webPayService.validateMerchant({
+      data: params.data,
       validation_url: params.validation_url,
+      initiative_context: window.location.hostname
     });
   }
 
   public newTransaction(
-    params: any
+    params: NewCardTransactionRequest
   ): Observable<any> {
     return this.webPayService.newTransaction(params);
   }

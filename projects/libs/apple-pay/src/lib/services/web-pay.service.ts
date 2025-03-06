@@ -1,7 +1,12 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {StartPaymentRequest, StartPaymentResponse} from '../interfaces/alternative-payment-method.interface';
+import {
+  MerchantValidateRequest,
+  NewCardTransactionRequest,
+  StartPaymentRequest,
+  StartPaymentResponse
+} from '../interfaces/alternative-payment-method.interface';
 
 @Injectable({providedIn: 'root'})
 export class WebPayService {
@@ -23,19 +28,22 @@ export class WebPayService {
     );
   }
 
-  validateMerchant(req: any): Observable<any> {
+  validateMerchant(req: MerchantValidateRequest): Observable<StartPaymentResponse> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
     return this.httpClient.post<any>(
-      `/v2/apple-pay/${req.data['trx_token']}/validate-merchant`,
-      JSON.stringify({validationURL: req.validation_url}),
+      `/v2/apple-pay/${req.data['trx_token']}/merchant-validate`,
+      JSON.stringify({
+        validationURL: req.validation_url,
+        initiative_context: window.location.hostname
+      }),
       {headers}
     );
   }
 
-  newTransaction(event: any) {
+  newTransaction(req: NewCardTransactionRequest) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -44,8 +52,9 @@ export class WebPayService {
       `/v2/transaction`,
       JSON.stringify(
         {
+          data: req.transaction.data,
           payment_method_type: 'apple-pay',
-          payment_method_data: event.payment.token
+          payment_method_data: req.transaction.payment_method_data
         }
       ),
       {headers}
