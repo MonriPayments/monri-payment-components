@@ -74,15 +74,12 @@ export const ApplePayStore = signalStore(
         const session = new (window as any).ApplePaySession(3, request);
 
         session.onvalidatemerchant = (event: { validationURL: string }) => {
-          console.log("validationURL:", event.validationURL);
-          console.log("validateMerchant:", applePayService.validateMerchant)
           applePayService.validateMerchant({
             data: {trx_token: store.inputParams().data['trx_token']},
             validation_url: event.validationURL,
             initiative_context: window.location.hostname
           }).pipe(
             tap((response) => {
-              console.debug("completeMerchantValidation Response:", response)
                 session.completeMerchantValidation(response)
             }),
             catchError((error) => {
@@ -94,19 +91,25 @@ export const ApplePayStore = signalStore(
         };
 
         session.onpaymentauthorized = (event: any) => {
-          console.debug("onPaymentAuthorized")
-          console.debug("Payment token:", event.payment.token)
+          const transactionData = {
+            trx_token: store.inputParams().data['trx_token'],
+            language: 'en',
+            ch_full_name: store.inputParams().data['transaction']['ch_full_name' as any],
+            ch_address: store.inputParams().data['transaction']['ch_address' as any],
+            ch_city: store.inputParams().data['transaction']['ch_city' as any],
+            ch_zip: store.inputParams().data['transaction']['ch_zip' as any],
+            ch_country: store.inputParams().data['transaction']['ch_country' as any],
+            ch_phone: store.inputParams().data['transaction']['ch_phone' as any],
+            ch_email: store.inputParams().data['transaction']['ch_email' as any],
+            meta: store.inputParams().data['transaction']['meta' as any] || {},
+            payment_method_type: 'apple-pay',
+            payment_method_data: event.payment.token
+          };
           return new Promise((resolve) => {
             applePayService.newTransaction({
-              transaction: {
-                data: store.inputParams().data,
-                payment_method_type: 'apple-pay',
-                payment_method_data: event.payment.token
-              }
+              transaction: transactionData
             }).pipe(
               tap((response) => {
-                console.debug("Payment token response:", event.payment.token)
-                console.log("Payment successfully processed:", response);
                 session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
                 resolve(response);
               }),
@@ -146,7 +149,6 @@ export const ApplePayStore = signalStore(
           el.nativeElement.querySelector('#container-apple'),
           applePayButton
         );
-        console.log('Button is created.');
         renderer.listen(
           applePayButton,
           'click',

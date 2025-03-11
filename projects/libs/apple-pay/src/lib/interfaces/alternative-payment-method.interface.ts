@@ -32,8 +32,17 @@ export type MerchantValidateRequest = {
 
 export type NewCardTransactionRequest = {
   transaction: {
-    data: { [k: string]: string };
-    payment_method_type: any;
+    trx_token: string;
+    language: string;
+    ch_full_name: string;
+    ch_address: string;
+    ch_city: string;
+    ch_zip: string;
+    ch_country: string;
+    ch_phone: string;
+    ch_email: string;
+    meta: any;
+    payment_method_type: string;
     payment_method_data: any;
-  },
+  };
 };

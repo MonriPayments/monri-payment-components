@@ -50,13 +50,7 @@ export class WebPayService {
 
     return this.httpClient.post<any>(
       `/v2/transaction`,
-      JSON.stringify(
-        {
-          data: req.transaction.data,
-          payment_method_type: 'apple-pay',
-          payment_method_data: req.transaction.payment_method_data
-        }
-      ),
+      JSON.stringify(req),
       {headers}
     );
   }
