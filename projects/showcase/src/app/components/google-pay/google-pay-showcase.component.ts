@@ -30,8 +30,9 @@ export class GooglePayShowcaseComponent implements OnInit, OnDestroy {
 
     const googlePayElement = document.createElement('lib-google-pay') as GooglePayElement;
     googlePayElement.inputParams = {
+      environment: "TEST",
       payment_method: 'google-pay',
-      data: {buttonStyle: "black", buttonType: "buy", buttonLocale: "de"},
+      data: {buttonStyle: "black", buttonType: "buy", buttonLocale: "de"}
     }
 
     const googlePayComponent = document.getElementById('google-pay-component');

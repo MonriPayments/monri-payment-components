@@ -2,7 +2,7 @@ import {patchState, signalStore, StateSignal, withComputed, withHooks, withMetho
 import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {GooglePayService} from "../services/google-pay.service";
-import {StartPaymentRequest} from "../interfaces/alternative-payment-method.interface";
+import {StartPaymentRequest, TransactionStatus} from "../interfaces/alternative-payment-method.interface";
 import {withRequestStatus} from "./request-status.feature";
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
 import {
@@ -12,6 +12,7 @@ import {
   GoogleTransactionInfo,
   GoogleTransactionState
 } from "../models/google-pay.models";
+import {catchError, of, tap} from "rxjs";
 
 declare var google: any;
 type GooglePayState = {
@@ -27,7 +28,7 @@ const initialState: GooglePayState = {
     countryCode: 'US',
     currencyCode: 'EUR',
     totalPriceStatus: 'FINAL',
-    totalPrice: '2.15',
+    totalPrice: '3.15',
   },
   googlePaymentDataRequest: {
     apiVersion: 2,
@@ -49,8 +50,8 @@ const initialState: GooglePayState = {
         tokenizationSpecification: {
           type: 'PAYMENT_GATEWAY',
           parameters: {
-            gateway: 'example',
-            gatewayMerchantId: 'exampleGatewayMerchantId'
+            gateway: 'monripayments',
+            gatewayMerchantId: 'webPayMerchantId1',
           }
         }
       }
@@ -59,12 +60,13 @@ const initialState: GooglePayState = {
       countryCode: 'US',
       currencyCode: 'EUR',
       totalPriceStatus: 'FINAL',
-      totalPrice: '2.15',
+      totalPrice: '3.15',
     },
     merchantInfo: {
       merchantId: 'BCR2DN4TQHE6DYLO',
-      merchantName: 'Monri'
+      merchantName: 'Monri Payments'
     },
+    callbackIntents: ['PAYMENT_AUTHORIZATION'],
   },
   googleIsReadyToPayRequest: {
     apiVersion: 2,
@@ -96,8 +98,7 @@ export const GooglePayStore = signalStore(
         buttonType: store.inputParams()?.data['buttonType'],
         buttonLocale: store.inputParams()?.data['buttonLocale']
       };
-    }),
-    // isLoading: computed(() => store.isPending())
+    })
   })),
   withMethods(
     (
@@ -116,9 +117,7 @@ export const GooglePayStore = signalStore(
 
       const onGooglePayLoaded = () => {
         const paymentsClient = getGooglePaymentsClient();
-        console.log("googleIsReadyToPayRequest iz Store:", store.googleIsReadyToPayRequest());
-        paymentsClient
-          .isReadyToPay(store.googleIsReadyToPayRequest())
+        paymentsClient.isReadyToPay(store.googleIsReadyToPayRequest())
           .then((response: any) => {
             if (response.result) {
               addGooglePayButton();
@@ -130,24 +129,24 @@ export const GooglePayStore = signalStore(
       }
 
       const getGooglePaymentsClient = () => {
-        console.log("getGooglePaymentsClient")
         return new google.payments.api.PaymentsClient({
-          environment: store.inputParams().environment,
-          onPaymentAuthorized: (paymentData: any) =>
-            onPaymentAuthorized(paymentData)
+          paymentDataCallbacks: {
+            environment: store.inputParams().environment,
+            onPaymentAuthorized: (paymentData: any) =>
+              onPaymentAuthorized(paymentData)
+          }
         });
       }
 
       const onPaymentAuthorized = (paymentData: any) => {
-        (window as any).PAYMENT_AUTHORIZED_EVENT = paymentData;
         return new Promise((resolve) => {
           processPayment(paymentData)
             .then(() => {
-              console.log('Payment successful!');
+              console.log('Google Pay Payment successful.');
               resolve({transactionState: store.googleTransactionState()?.onSuccess});
             })
-            .catch(() => {
-              console.log('Payment failed. Insufficient funds. Please try again.');
+            .catch((error) => {
+              console.log('Google Pay Payment failed:', error);
               resolve({
                 transactionState: store.googleTransactionState()?.onError,
                 error: store.googleErrorState()
@@ -158,7 +157,6 @@ export const GooglePayStore = signalStore(
 
 
       const addGooglePayButton = () => {
-        console.log('addGooglePayButton.');
         const paymentsClient = getGooglePaymentsClient();
 
         const button = paymentsClient.createButton({
@@ -174,39 +172,49 @@ export const GooglePayStore = signalStore(
         );
       };
 
-
       const onGooglePaymentButtonClicked = () => {
-        console.log('Google Pay button clicked.');
         let paymentDataRequest = store.googlePaymentDataRequest();
         if (!paymentDataRequest) {
           console.log("No paymentDataRequest found.");
           return;
         }
         paymentDataRequest['transactionInfo'] = store.googleTransactionInfo() as GoogleTransactionInfo;
-
         const paymentsClient = getGooglePaymentsClient();
-
-        console.log("loadPaymentData...");
         paymentsClient.loadPaymentData(paymentDataRequest)
-          .then((paymentData: any) => {
-            console.log("Payment data loaded", paymentData);
-            (window as any).PAYMENT_AUTHORIZED_EVENT = paymentData
-          })
-          .catch((error: any) => {
-            console.error("Error loading payment data", error);
-          });
       };
 
-
       const processPayment = (paymentData: any) => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            console.log(paymentData);
-            paymentData.paymentMethodData.tokenizationData.token;
-            resolve({});
-          }, 3000);
+        return new Promise((resolve, reject) => {
+          const transactionData = {
+            trx_token: store.inputParams().data['trx_token'],
+            language: 'en',
+            ch_full_name: store.inputParams().data['transaction']['ch_full_name' as any],
+            ch_address: store.inputParams().data['transaction']['ch_address' as any],
+            ch_city: store.inputParams().data['transaction']['ch_city' as any],
+            ch_zip: store.inputParams().data['transaction']['ch_zip' as any],
+            ch_country: store.inputParams().data['transaction']['ch_country' as any],
+            ch_phone: store.inputParams().data['transaction']['ch_phone' as any],
+            ch_email: store.inputParams().data['transaction']['ch_email' as any],
+            meta: store.inputParams().data['transaction']['meta' as any] || {},
+            payment_method_type: 'google-pay',
+            payment_method_data: paymentData?.paymentMethodData?.tokenizationData?.token
+          };
+
+          googlePayService.newTransaction({transaction: transactionData}).pipe(
+            tap((response) => {
+              const transactionStatus = response?.transaction?.status;
+              if (transactionStatus === TransactionStatus.approved) {
+                resolve(response);
+              }
+            }),
+            catchError((error) => {
+              console.error("Google Pay processPayment failed:", error);
+              reject(error);
+              return of(null);
+            })
+          ).subscribe();
         });
-      }
+      };
 
       const setWindowServices = () => {
         window.googlePayStore = store;
@@ -215,7 +223,6 @@ export const GooglePayStore = signalStore(
 
       return {
         loadGooglePayScript,
-        // onLoad,
         setWindowServices
       };
     }
@@ -225,7 +232,6 @@ export const GooglePayStore = signalStore(
       store.loadGooglePayScript();
       patchState(
         store
-        // setPending()
       );
       store.setWindowServices();
     }

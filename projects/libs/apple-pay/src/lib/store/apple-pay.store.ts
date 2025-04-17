@@ -3,7 +3,7 @@ import {computed, ElementRef, inject, Renderer2} from '@angular/core';
 import {setPending, withRequestStatus} from './request-status.feature';
 import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
-import {StartPaymentRequest} from '../interfaces/alternative-payment-method.interface';
+import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
 import {catchError, of, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
@@ -80,7 +80,7 @@ export const ApplePayStore = signalStore(
             initiative_context: window.location.hostname
           }).pipe(
             tap((response) => {
-                session.completeMerchantValidation(response)
+              session.completeMerchantValidation(response)
             }),
             catchError((error) => {
               console.error('Error validating merchant:', error);
@@ -106,11 +106,14 @@ export const ApplePayStore = signalStore(
             payment_method_data: event.payment.token
           };
           return new Promise((resolve) => {
-            applePayService.newTransaction({
-              transaction: transactionData
-            }).pipe(
+            applePayService.newTransaction({transaction: transactionData}).pipe(
               tap((response) => {
-                session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+                const transactionStatus = response?.transaction?.status;
+                if (transactionStatus === TransactionStatus.approved) {
+                  session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+                } else {
+                  session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+                }
                 resolve(response);
               }),
               catchError((error) => {

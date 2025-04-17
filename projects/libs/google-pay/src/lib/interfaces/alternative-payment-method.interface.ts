@@ -1,7 +1,13 @@
-import {GoogleErrorState, GoogleTransactionState} from "../models/google-pay.models";
+import {
+  GoogleErrorState,
+  GooglePaymentDataRequest,
+  GoogleTransactionInfo,
+  GoogleTransactionState
+} from "../models/google-pay.models";
 
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): any;
+
   newTransaction(params: NewCardTransactionRequest): any;
 }
 
@@ -24,9 +30,14 @@ export type StartPaymentResponse = {
   merchant_capabilities: string[];
   total: { label: string; amount: string; };
 
-  allowedPaymentMethods: any,
-  transactionInfo: any
-  merchantInfo: any
+  // allowedPaymentMethods: any,
+  // transactionInfo: any
+  // merchantInfo: any
+  // callbackIntents: any
+  allowedPaymentMethods: GooglePaymentDataRequest['allowedPaymentMethods'][number];
+  transactionInfo: GoogleTransactionInfo
+  merchantInfo: GooglePaymentDataRequest['merchantInfo'];
+  callbackIntents: GooglePaymentDataRequest['callbackIntents'];
   googleErrorState?: GoogleErrorState;
   googleTransactionState?: GoogleTransactionState;
 };
@@ -47,3 +58,8 @@ export type NewCardTransactionRequest = {
     payment_method_data: any;
   };
 };
+
+export enum TransactionStatus  {
+  approved = 'approved',
+  declined = 'declined',
+}

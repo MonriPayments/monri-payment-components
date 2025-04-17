@@ -20,7 +20,6 @@ export class ApplePayComponent implements OnInit {
 
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.applePayStore, {inputParams: value});
-    console.log('Apple Pay inputParams:', this.applePayStore.inputParams());
   }
 
   get applePayService(): ApplePayService {

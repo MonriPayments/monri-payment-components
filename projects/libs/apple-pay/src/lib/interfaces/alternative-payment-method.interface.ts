@@ -46,3 +46,8 @@ export type NewCardTransactionRequest = {
     payment_method_data: any;
   };
 };
+
+export enum TransactionStatus {
+  approved = 'approved',
+  declined = 'declined',
+}

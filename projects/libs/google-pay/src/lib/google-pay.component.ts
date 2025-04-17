@@ -6,8 +6,6 @@ import {StartPaymentRequest} from "./interfaces/alternative-payment-method.inter
 import {setFulfilled} from "./store/request-status.feature";
 import {take} from "rxjs";
 
-declare var google: any;
-
 @Component({
   selector: 'lib-google-pay',
   templateUrl: './google-pay.component.html',
@@ -43,7 +41,9 @@ export class GooglePayComponent implements OnInit {
           googlePaymentDataRequest: {
             ...this.googlePayStore.googlePaymentDataRequest(),
             allowedPaymentMethods: [response?.allowedPaymentMethods],
-            merchantInfo: response.merchantInfo
+            merchantInfo: response.merchantInfo,
+            callbackIntents: response.callbackIntents,
+            // callbackIntents: ['PAYMENT_AUTHORIZATION'],
           },
           googleIsReadyToPayRequest: {
             apiVersion: 2,
