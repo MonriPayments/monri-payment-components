@@ -9,7 +9,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "paths": {
       "google-pay": ["./dist/google-pay"],
-      "keks-pay": ["./dist/keks-pay"]
+      "keks-pay": ["./dist/keks-pay"],
+      "apple-pay": ["./dist/apple-pay"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

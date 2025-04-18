@@ -1,10 +1,10 @@
 export interface GoogleTransactionInfo {
-  displayItems: { label: string, type: string, price: string }[];
+  displayItems?: { label: string, type: string, price: string }[] | undefined;
   countryCode: string;
   currencyCode: string;
   totalPriceStatus: string;
   totalPrice: string;
-  totalPriceLabel: string;
+  totalPriceLabel?: string | undefined;
 }
 
 export interface GooglePaymentDataRequest {
@@ -26,7 +26,7 @@ export interface GooglePaymentDataRequest {
   }[];
   transactionInfo: GoogleTransactionInfo;
   merchantInfo: { merchantId: string, merchantName: string };
-  callbackIntents: string[];
+  callbackIntents?: string[];
 }
 
 export interface GoogleIsReadyToPayRequest {
@@ -42,7 +42,7 @@ export interface GoogleIsReadyToPayRequest {
 }
 
 export interface GoogleErrorState {
-  intent: string;
+  intent?: string | undefined;
   message: string;
   reason: string;
 }

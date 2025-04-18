@@ -1,7 +1,7 @@
 const path = require('path');
 module.exports = {
   entry: {
-    'google-pay-bundle.js': [
+    'google-pay-component.js': [
       path.resolve(
         __dirname,
         '../../../dist/google-pay-app/browser/polyfills.js'

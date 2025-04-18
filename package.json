@@ -10,8 +10,10 @@
     "test": "ng test",
     "lint": "ng lint",
     "prettify-keks-pay": "cd projects/libs/keks-pay && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\" && cd ../../apps/keks-pay-app && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\"",
+    "prettify-apple-pay": "cd projects/libs/apple-pay && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\" && cd ../../apps/apple-pay-app && prettier --write \"**/*.{js,json,css,scss,less,md,ts,html,component.html}\"",
     "build-keks-pay-library": "ng build keks-pay && ng build keks-pay-app && cd projects/apps/keks-pay-app && webpack && node build-bundles.js",
-    "build-google-pay-library": "ng build google-pay && ng build google-pay-app && cd projects/apps/google-pay-app && webpack"
+    "build-google-pay-library": "ng build google-pay && ng build google-pay-app && cd projects/apps/google-pay-app && webpack",
+    "build-apple-pay-library": "ng build apple-pay && ng build apple-pay-app && cd projects/apps/apple-pay-app && webpack"
   },
   "private": true,
   "dependencies": {
