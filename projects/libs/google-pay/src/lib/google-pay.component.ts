@@ -13,47 +13,6 @@ import {take} from "rxjs";
   styleUrls: ['./google-pay.component.scss'],
   providers: [GooglePayStore, GooglePayService]
 })
-export class GooglePayComponent implements OnInit {
-
+export class GooglePayComponent {
   protected readonly googlePayStore = inject(GooglePayStore);
-  private readonly _googlePayService: GooglePayService = inject(GooglePayService);
-
-  @Input() set inputParams(value: StartPaymentRequest) {
-    patchState(this.googlePayStore, {inputParams: value});
-    console.log('Google Pay inputParams:', this.googlePayStore.inputParams());
-  }
-
-  get googlePayService(): GooglePayService {
-    return this._googlePayService;
-  }
-
-  ngOnInit(): void {
-    this.startPayment()
-  }
-
-  private startPayment() {
-    this.googlePayService
-      .startPayment(this.googlePayStore.inputParams())
-      .pipe(take(1))
-      .subscribe(response => {
-        patchState(this.googlePayStore, {
-          googleTransactionInfo: response?.transactionInfo,
-          googlePaymentDataRequest: {
-            ...this.googlePayStore.googlePaymentDataRequest(),
-            allowedPaymentMethods: [response?.allowedPaymentMethods],
-            merchantInfo: response.merchantInfo,
-            callbackIntents: response.callbackIntents,
-            // callbackIntents: ['PAYMENT_AUTHORIZATION'],
-          },
-          googleIsReadyToPayRequest: {
-            apiVersion: 2,
-            apiVersionMinor: 0,
-            allowedPaymentMethods: [response?.allowedPaymentMethods]
-          },
-          googleErrorState: response?.googleErrorState,
-          googleTransactionState: response?.googleTransactionState
-        });
-        patchState(this.googlePayStore, setFulfilled());
-      });
-  }
 }

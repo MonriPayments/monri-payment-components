@@ -1,11 +1,11 @@
 import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
-import {setPending, withRequestStatus} from './request-status.feature';
+import {setFulfilled, setPending, withRequestStatus} from './request-status.feature';
 import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
-import {catchError, of, tap} from 'rxjs';
+import {catchError, of, take, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
 
 export const ApplePayStore = signalStore(
@@ -32,7 +32,7 @@ export const ApplePayStore = signalStore(
         locale: store.inputParams().data['locale']
       };
     }),
-    // isLoading: computed(() => store.isPending())
+    isLoading: computed(() => store.isPending())
   })),
   withMethods(
     (
@@ -43,7 +43,6 @@ export const ApplePayStore = signalStore(
     ) => {
       const loadApplePayScript = () => {
         return new Promise((resolve, reject) => {
-          console.log('Apple Pay script is loaded.');
           const script = renderer.createElement('script');
           script.src =
             'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
@@ -55,7 +54,7 @@ export const ApplePayStore = signalStore(
       };
 
       const onApplePayButtonClick = () => {
-        if (!(window as any).ApplePaySession) {
+        if (!window.ApplePaySession) {
           console.error('Apple Pay is not supported.');
           return;
         }
@@ -71,7 +70,7 @@ export const ApplePayStore = signalStore(
           }
         };
 
-        const session = new (window as any).ApplePaySession(3, request);
+        const session = new window.ApplePaySession(3, request);
 
         session.onvalidatemerchant = (event: { validationURL: string }) => {
           applePayService.validateMerchant({
@@ -106,7 +105,7 @@ export const ApplePayStore = signalStore(
             payment_method_data: event.payment.token
           };
           return new Promise((resolve) => {
-            applePayService.newTransaction({transaction: transactionData}).pipe(
+            applePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
               tap((response) => {
                 const transactionStatus = response?.transaction?.status;
                 if (transactionStatus === TransactionStatus.approved) {
@@ -158,20 +157,34 @@ export const ApplePayStore = signalStore(
           onApplePayButtonClick.bind(this)
         );
       };
-
-      const onLoad = () => {
-        loadApplePayScript().then(() => {
-          createApplePayButton();
-        });
-      };
-      const setWindowServices = () => {
-        window.applePayStore = store;
-        window.applePayService = applePayService;
+      const startPayment = () => {
+        applePayService
+          .startPayment(store.inputParams())
+          .pipe(take(1))
+          .subscribe(response => {
+            patchState(store, {
+              countryCode: response.country_code,
+              currencyCode: response.currency_code,
+              supportedNetworks: response.supported_networks,
+              merchantCapabilities: response.merchant_capabilities,
+              total: {label: response.total.label, amount: response.total.amount},
+            }, setFulfilled());
+          });
+      }
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'SET_INPUT') {
+          patchState(store, {
+            inputParams: event.data.payload.inputParams
+          })
+          loadApplePayScript().then(() => {
+            createApplePayButton();
+            startPayment();
+          });
+        }
       };
 
       return {
-        onLoad,
-        setWindowServices
+        handleMessage
       };
     }
   ),
@@ -181,8 +194,7 @@ export const ApplePayStore = signalStore(
         store,
         setPending()
       );
-      store.onLoad();
-      store.setWindowServices();
+      window.addEventListener('message', store.handleMessage.bind(this));
     }
   })
 );
@@ -190,14 +202,5 @@ export const ApplePayStore = signalStore(
 declare global {
   interface Window {
     ApplePaySession?: any;
-    applePayService: ApplePayService;
-    applePayStore:
-      | Prettify<
-      SignalStoreSlices<object> &
-      SignalsDictionary &
-      MethodsDictionary &
-      StateSignal<object>
-    >
-      | unknown;
   }
 }

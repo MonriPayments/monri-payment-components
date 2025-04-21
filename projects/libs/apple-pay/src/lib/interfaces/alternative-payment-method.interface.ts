@@ -3,7 +3,7 @@ export interface AlternativePaymentMethodInterface {
 
   validateMerchant(params: MerchantValidateRequest): any;
 
-  newTransaction(params: NewCardTransactionRequest): any;
+  newTransaction(params: NewCardTransactionRequest, env: string): any;
 }
 
 export type StartPaymentRequest = {

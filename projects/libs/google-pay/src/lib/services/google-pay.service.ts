@@ -29,8 +29,9 @@ export class GooglePayService implements AlternativePaymentMethodInterface {
   }
 
   public newTransaction(
-    params: NewCardTransactionRequest
+    params: NewCardTransactionRequest,
+    env: string
   ): Observable<any> {
-    return this.webPayService.newTransaction(params);
+    return this.webPayService.newTransaction(params, env);
   }
 }
