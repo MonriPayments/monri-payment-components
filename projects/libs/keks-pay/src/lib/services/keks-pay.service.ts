@@ -5,7 +5,7 @@ import {
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
 import { WebPayService } from './web-pay.service';
-import { delay, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
