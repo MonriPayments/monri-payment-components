@@ -1,6 +1,5 @@
 import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
-import {setFulfilled, setPending, withRequestStatus} from './request-status.feature';
 import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
 import {catchError, of, take, tap} from 'rxjs';
@@ -21,7 +20,6 @@ export const ApplePayStore = signalStore(
     } as StartPaymentRequest,
     resolution: window.innerWidth
   }),
-  withRequestStatus(),
   withComputed(store => ({
     appleButtonStyle: computed(() => {
       return {
@@ -30,7 +28,6 @@ export const ApplePayStore = signalStore(
         locale: store.inputParams().data['locale']
       };
     }),
-    isLoading: computed(() => store.isPending())
   })),
   withMethods(
     (
@@ -41,6 +38,7 @@ export const ApplePayStore = signalStore(
     ) => {
       const loadApplePayScript = () => {
         return new Promise((resolve, reject) => {
+          console.log('Apple Pay script is loaded.');
           const script = renderer.createElement('script');
           script.src =
             'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
@@ -52,7 +50,7 @@ export const ApplePayStore = signalStore(
       };
 
       const onApplePayButtonClick = () => {
-        if (!window.ApplePaySession) {
+        if (!(window as any).ApplePaySession) {
           console.error('Apple Pay is not supported.');
           return;
         }
@@ -68,11 +66,11 @@ export const ApplePayStore = signalStore(
           }
         };
 
-        const session = new window.ApplePaySession(3, request);
+        const session = new (window as any).ApplePaySession(3, request);
 
         session.onvalidatemerchant = (event: { validationURL: string }) => {
           applePayService.validateMerchant({
-            data: {trx_token: store.inputParams().data['trx_token']},
+            data: store.inputParams().data,
             validation_url: event.validationURL,
             initiative_context: window.location.hostname
           }).pipe(
@@ -166,9 +164,11 @@ export const ApplePayStore = signalStore(
               supportedNetworks: response.supported_networks,
               merchantCapabilities: response.merchant_capabilities,
               total: {label: response.total.label, amount: response.total.amount},
-            }, setFulfilled());
+            });
           });
       }
+
+
       const handleMessage = (event: MessageEvent) => {
         if (event.data?.type === 'SET_INPUT') {
           patchState(store, {
@@ -182,16 +182,13 @@ export const ApplePayStore = signalStore(
       };
 
       return {
-        handleMessage
+        handleMessage,
+        startPayment
       };
     }
   ),
   withHooks({
     onInit(store) {
-      patchState(
-        store,
-        setPending()
-      );
       window.addEventListener('message', store.handleMessage.bind(this));
     }
   })

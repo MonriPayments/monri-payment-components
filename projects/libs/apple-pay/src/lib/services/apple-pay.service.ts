@@ -7,7 +7,7 @@ import {
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
 import {WebPayService} from './web-pay.service';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +22,17 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
   public startPayment(
     params: StartPaymentRequest
   ): Observable<StartPaymentResponse> {
+    if (params.is_test) {
+      return of<StartPaymentResponse>({
+        country_code: 'HR',
+        currency_code: 'EUR',
+        supported_networks: ['Visa', 'MasterCard'],
+        merchant_capabilities: ['supports3DS'],
+        total: { label: 'Naziv trgovca', amount: '1.00' },
+        status: 'success',
+      })
+    }
+
     return this.webPayService.startPayment({
       payment_method: params.payment_method,
       data: params.data
@@ -29,7 +40,7 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
   }
 
   public validateMerchant(
-    params: MerchantValidateRequest
+    params: MerchantValidateRequest,
   ): Observable<any> {
     return this.webPayService.validateMerchant({
       data: params.data,

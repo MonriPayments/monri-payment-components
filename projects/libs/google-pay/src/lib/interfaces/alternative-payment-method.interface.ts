@@ -13,7 +13,6 @@ export interface AlternativePaymentMethodInterface {
 
 export type StartPaymentRequest = {
   payment_method: string;
-  environment: string;
   is_test?: boolean;
   data: { [k: string]: string };
 };
