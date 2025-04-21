@@ -1,9 +1,7 @@
-import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
-import {Prettify} from '@ngrx/signals/src/ts-helpers';
-import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
+import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {GooglePayService} from "../services/google-pay.service";
 import {StartPaymentRequest, TransactionStatus} from "../interfaces/alternative-payment-method.interface";
-import {setFulfilled, withRequestStatus} from "./request-status.feature";
+import {setFulfilled, setPending, withRequestStatus} from "./request-status.feature";
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
 import {
   GoogleErrorState,
@@ -261,6 +259,10 @@ export const GooglePayStore = signalStore(
   ),
   withHooks({
     onInit(store) {
+      patchState(
+        store,
+        setPending()
+      );
       window.addEventListener('message', store.handleMessage.bind(this));
     }
   })
