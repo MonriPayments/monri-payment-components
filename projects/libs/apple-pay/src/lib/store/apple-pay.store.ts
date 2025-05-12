@@ -1,11 +1,8 @@
-import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
-import {setPending, withRequestStatus} from './request-status.feature';
-import {Prettify} from '@ngrx/signals/src/ts-helpers';
-import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
-import {catchError, of, tap} from 'rxjs';
+import {catchError, of, take, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
 
 export const ApplePayStore = signalStore(
@@ -23,7 +20,6 @@ export const ApplePayStore = signalStore(
     } as StartPaymentRequest,
     resolution: window.innerWidth
   }),
-  withRequestStatus(),
   withComputed(store => ({
     appleButtonStyle: computed(() => {
       return {
@@ -32,7 +28,6 @@ export const ApplePayStore = signalStore(
         locale: store.inputParams().data['locale']
       };
     }),
-    // isLoading: computed(() => store.isPending())
   })),
   withMethods(
     (
@@ -75,7 +70,7 @@ export const ApplePayStore = signalStore(
 
         session.onvalidatemerchant = (event: { validationURL: string }) => {
           applePayService.validateMerchant({
-            data: {trx_token: store.inputParams().data['trx_token']},
+            data: store.inputParams().data,
             validation_url: event.validationURL,
             initiative_context: window.location.hostname
           }).pipe(
@@ -106,7 +101,7 @@ export const ApplePayStore = signalStore(
             payment_method_data: event.payment.token
           };
           return new Promise((resolve) => {
-            applePayService.newTransaction({transaction: transactionData}).pipe(
+            applePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
               tap((response) => {
                 const transactionStatus = response?.transaction?.status;
                 if (transactionStatus === TransactionStatus.approved) {
@@ -158,31 +153,43 @@ export const ApplePayStore = signalStore(
           onApplePayButtonClick.bind(this)
         );
       };
+      const startPayment = () => {
+        applePayService
+          .startPayment(store.inputParams())
+          .pipe(take(1))
+          .subscribe(response => {
+            patchState(store, {
+              countryCode: response.country_code,
+              currencyCode: response.currency_code,
+              supportedNetworks: response.supported_networks,
+              merchantCapabilities: response.merchant_capabilities,
+              total: {label: response.total.label, amount: response.total.amount},
+            });
+          });
+      }
 
-      const onLoad = () => {
-        loadApplePayScript().then(() => {
-          createApplePayButton();
-        });
-      };
-      const setWindowServices = () => {
-        window.applePayStore = store;
-        window.applePayService = applePayService;
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'SET_INPUT') {
+          patchState(store, {
+            inputParams: event.data.payload.inputParams
+          })
+          loadApplePayScript().then(() => {
+            startPayment();
+            createApplePayButton();
+          });
+        }
       };
 
       return {
-        onLoad,
-        setWindowServices
+        handleMessage,
+        startPayment
       };
     }
   ),
   withHooks({
     onInit(store) {
-      patchState(
-        store,
-        setPending()
-      );
-      store.onLoad();
-      store.setWindowServices();
+      window.addEventListener('message', store.handleMessage.bind(this));
     }
   })
 );
@@ -190,14 +197,5 @@ export const ApplePayStore = signalStore(
 declare global {
   interface Window {
     ApplePaySession?: any;
-    applePayService: ApplePayService;
-    applePayStore:
-      | Prettify<
-      SignalStoreSlices<object> &
-      SignalsDictionary &
-      MethodsDictionary &
-      StateSignal<object>
-    >
-      | unknown;
   }
 }
