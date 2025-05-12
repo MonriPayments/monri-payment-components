@@ -1,6 +1,10 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, Input, OnInit} from '@angular/core';
+import {patchState} from "@ngrx/signals";
 import {GooglePayService} from "./services/google-pay.service";
 import {GooglePayStore} from "./store/google-pay.store";
+import {StartPaymentRequest} from "./interfaces/alternative-payment-method.interface";
+import {setFulfilled} from "./store/request-status.feature";
+import {take} from "rxjs";
 
 @Component({
   selector: 'lib-google-pay',

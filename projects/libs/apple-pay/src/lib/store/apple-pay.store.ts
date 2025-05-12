@@ -1,6 +1,8 @@
-import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
 import {setFulfilled, setPending, withRequestStatus} from './request-status.feature';
+import {Prettify} from '@ngrx/signals/src/ts-helpers';
+import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
 import {ApplePayButtonConfig} from '../models/apple-pay.models';
 import {catchError, of, take, tap} from 'rxjs';
