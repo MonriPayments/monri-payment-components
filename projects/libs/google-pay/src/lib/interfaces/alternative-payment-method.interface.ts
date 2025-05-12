@@ -8,11 +8,12 @@ import {
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): any;
 
-  newTransaction(params: NewCardTransactionRequest, env: string): any;
+  newTransaction(params: NewCardTransactionRequest): any;
 }
 
 export type StartPaymentRequest = {
   payment_method: string;
+  environment: string;
   is_test?: boolean;
   data: { [k: string]: string };
 };

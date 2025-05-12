@@ -16,26 +16,24 @@ export class WebPayService {
   }
 
   startPayment(req: StartPaymentRequest): Observable<StartPaymentResponse> {
-    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
     return this.httpClient.post<StartPaymentResponse>(
-      `https://${hostname}.monri.com/v2/google-pay/${req.data['trx_token']}/start-payment`,
+      `/v2/google-pay/${req.data['trx_token']}/start-payment`,
       JSON.stringify({}),
       {headers}
     );
   }
 
-  newTransaction(req: NewCardTransactionRequest, env: string) {
-    const hostname = env === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
+  newTransaction(req: NewCardTransactionRequest) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
     return this.httpClient.post<any>(
-      `https://${hostname}.monri.com/v2/transaction`,
+      `/v2/transaction`,
       JSON.stringify(req),
       {headers}
     );

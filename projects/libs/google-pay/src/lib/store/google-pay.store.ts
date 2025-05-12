@@ -1,7 +1,9 @@
-import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {Prettify} from '@ngrx/signals/src/ts-helpers';
+import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
 import {GooglePayService} from "../services/google-pay.service";
 import {StartPaymentRequest, TransactionStatus} from "../interfaces/alternative-payment-method.interface";
-import {setFulfilled, setPending, withRequestStatus} from "./request-status.feature";
+import {withRequestStatus} from "./request-status.feature";
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
 import {
   GoogleErrorState,
@@ -10,7 +12,7 @@ import {
   GoogleTransactionInfo,
   GoogleTransactionState
 } from "../models/google-pay.models";
-import {catchError, of, take, tap} from "rxjs";
+import {catchError, of, tap} from "rxjs";
 
 declare var google: any;
 type GooglePayState = {
@@ -81,9 +83,8 @@ const initialState: GooglePayState = {
   googleTransactionState: undefined,
   inputParams: {
     payment_method: 'google-pay',
-    data: {
-      environment: 'test'
-    },
+    environment: 'TEST',
+    data: {},
   }
 }
 
@@ -97,8 +98,7 @@ export const GooglePayStore = signalStore(
         buttonType: store.inputParams()?.data['buttonType'],
         buttonLocale: store.inputParams()?.data['buttonLocale']
       };
-    }),
-    isLoading: computed(() => store.isPending())
+    })
   })),
   withMethods(
     (
@@ -107,7 +107,6 @@ export const GooglePayStore = signalStore(
       el = inject(ElementRef),
       googlePayService = inject(GooglePayService)
     ) => {
-      // TODO: replace multiple any with response models
 
       const loadGooglePayScript = () => {
         const script = document.createElement('script');
@@ -132,7 +131,7 @@ export const GooglePayStore = signalStore(
       const getGooglePaymentsClient = () => {
         return new google.payments.api.PaymentsClient({
           paymentDataCallbacks: {
-            environment: store.inputParams().data['environment'],
+            environment: store.inputParams().environment,
             onPaymentAuthorized: (paymentData: any) =>
               onPaymentAuthorized(paymentData)
           }
@@ -201,7 +200,7 @@ export const GooglePayStore = signalStore(
             payment_method_data: paymentData?.paymentMethodData?.tokenizationData?.token
           };
 
-          googlePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
+          googlePayService.newTransaction({transaction: transactionData}).pipe(
             tap((response) => {
               const transactionStatus = response?.transaction?.status;
               if (transactionStatus === TransactionStatus.approved) {
@@ -217,54 +216,24 @@ export const GooglePayStore = signalStore(
         });
       };
 
-      const startPayment = () => {
-        googlePayService
-          .startPayment(store.inputParams())
-          .pipe(take(1))
-          .subscribe(response => {
-            patchState(store, {
-              googleTransactionInfo: response?.transactionInfo,
-              googlePaymentDataRequest: {
-                ...store.googlePaymentDataRequest(),
-                allowedPaymentMethods: [response?.allowedPaymentMethods],
-                merchantInfo: response.merchantInfo,
-                callbackIntents: response.callbackIntents,
-                // callbackIntents: ['PAYMENT_AUTHORIZATION'],
-              },
-              googleIsReadyToPayRequest: {
-                apiVersion: 2,
-                apiVersionMinor: 0,
-                allowedPaymentMethods: [response?.allowedPaymentMethods]
-              },
-              googleErrorState: response?.googleErrorState,
-              googleTransactionState: response?.googleTransactionState
-            }, setFulfilled());
-          });
-      }
-
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data?.type === 'SET_INPUT') {
-          patchState(store, {
-            inputParams: event.data.payload.inputParams
-          })
-          loadGooglePayScript();
-          startPayment();
-        }
+      const setWindowServices = () => {
+        window.googlePayStore = store;
+        window.googlePayService = googlePayService;
       };
 
       return {
         loadGooglePayScript,
-        handleMessage
+        setWindowServices
       };
     }
   ),
   withHooks({
     onInit(store) {
+      store.loadGooglePayScript();
       patchState(
-        store,
-        setPending()
+        store
       );
-      window.addEventListener('message', store.handleMessage.bind(this));
+      store.setWindowServices();
     }
   })
 );
@@ -272,5 +241,14 @@ export const GooglePayStore = signalStore(
 declare global {
   interface Window {
     GooglePaySession?: any;
+    googlePayService: GooglePayService;
+    googlePayStore:
+      | Prettify<
+      SignalStoreSlices<object> &
+      SignalsDictionary &
+      MethodsDictionary &
+      StateSignal<object>
+    >
+      | unknown;
   }
 }
