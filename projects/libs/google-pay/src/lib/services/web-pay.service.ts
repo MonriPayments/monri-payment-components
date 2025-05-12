@@ -16,7 +16,7 @@ export class WebPayService {
   }
 
   startPayment(req: StartPaymentRequest): Observable<StartPaymentResponse> {
-    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
+    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg'
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -29,7 +29,7 @@ export class WebPayService {
   }
 
   newTransaction(req: NewCardTransactionRequest, env: string) {
-    const hostname = env === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
+    const hostname = env === 'test' ? 'ipgtest' : 'ipg'
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });

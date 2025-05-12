@@ -14,6 +14,9 @@ export type StartPaymentRequest = {
 
 export type StartPaymentResponse = {
   status: string;
+  product: string;
+  acquirer: string;
+  input_timeout: number;
   country_code: string;
   currency_code: string;
   supported_networks: string[];

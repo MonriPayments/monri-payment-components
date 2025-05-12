@@ -23,7 +23,8 @@ export class GooglePayService implements AlternativePaymentMethodInterface {
   ): Observable<StartPaymentResponse> {
     return this.webPayService.startPayment({
       payment_method: params.payment_method,
-      data: params.data
+      data: params.data,
+      environment: params.environment,
     });
   }
 

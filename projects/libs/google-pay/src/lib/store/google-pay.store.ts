@@ -81,9 +81,8 @@ const initialState: GooglePayState = {
   googleTransactionState: undefined,
   inputParams: {
     payment_method: 'google-pay',
-    data: {
-      environment: 'test'
-    },
+    environment: 'test',
+    data: {},
   }
 }
 
@@ -132,7 +131,7 @@ export const GooglePayStore = signalStore(
       const getGooglePaymentsClient = () => {
         return new google.payments.api.PaymentsClient({
           paymentDataCallbacks: {
-            environment: store.inputParams().data['environment'],
+            environment: store.inputParams().environment,
             onPaymentAuthorized: (paymentData: any) =>
               onPaymentAuthorized(paymentData)
           }
