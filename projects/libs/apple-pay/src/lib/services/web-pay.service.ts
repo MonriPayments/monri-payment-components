@@ -17,7 +17,8 @@ export class WebPayService {
   }
 
   startPayment(req: StartPaymentRequest): Observable<StartPaymentResponse> {
-    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
+    // req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ??
+    const hostname = 'ipgtest'
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -30,7 +31,8 @@ export class WebPayService {
   }
 
   validateMerchant(req: MerchantValidateRequest): Observable<StartPaymentResponse> {
-    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ?? 'ipgtest'
+    // req.data['environment'] === 'test' ? 'ipgtest' : 'ipg' ??
+    const hostname = 'ipgtest'
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -89,7 +91,7 @@ export class WebPayService {
     }
 
     return this.httpClient.post<any>(
-      `https://${env}.monri.com/v2/transaction`,
+      `https://ipgtest.monri.com/v2/transaction`,
       JSON.stringify(req),
       {headers}
     );

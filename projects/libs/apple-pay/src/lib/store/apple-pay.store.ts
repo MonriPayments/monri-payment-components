@@ -175,8 +175,8 @@ export const ApplePayStore = signalStore(
             inputParams: event.data.payload.inputParams
           })
           loadApplePayScript().then(() => {
-            createApplePayButton();
             startPayment();
+            createApplePayButton();
           });
         }
       };
