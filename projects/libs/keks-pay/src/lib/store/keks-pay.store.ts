@@ -1,24 +1,23 @@
 import {
   patchState,
   signalStore,
+  StateSignal,
   withComputed,
   withHooks,
   withMethods,
   withState
 } from '@ngrx/signals';
 import {computed, inject} from '@angular/core';
-import {
-  setFulfilled,
-  setPending,
-  withRequestStatus
-} from './request-status.feature';
+import {setPending, withRequestStatus} from './request-status.feature';
 import {KeksPayService} from '../services/keks-pay.service';
 import {TranslationService} from '../services/translation.service';
+import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {
-  StartPaymentRequest,
-  StartPaymentResponse
-} from '../interfaces/alternative-payment-method.interface';
-import {take} from 'rxjs';
+  MethodsDictionary,
+  SignalsDictionary,
+  SignalStoreSlices
+} from '@ngrx/signals/src/signal-store-models';
+import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 
 export const KeksPayStore = signalStore(
   withState({
@@ -32,7 +31,7 @@ export const KeksPayStore = signalStore(
       payment_method: '',
       data: {}
     } as StartPaymentRequest,
-    resolution: 0
+    resolution: window.innerWidth
   }),
   withRequestStatus(),
   withComputed(store => ({
@@ -65,65 +64,36 @@ export const KeksPayStore = signalStore(
       store,
       keksPayService = inject(KeksPayService),
       translationService = inject(TranslationService)
-    ) => {
-      const mobileViewRedirect = () => {
+    ) => ({
+      setWindowServices() {
+        window.keksPayStore = store;
+        window.keksPayService = keksPayService;
+        window.translationService = translationService;
+      },
+      mobileViewRedirect() {
         window.open(store.url(), '_blank');
-      };
-      const startPayment = (inputParams: StartPaymentRequest) => {
-        keksPayService
-          .startPayment(inputParams)
-          .pipe(take(1))
-          .subscribe((response: StartPaymentResponse) => {
-            patchState(store, {
-              qr_type: '1',
-              cid: response.qr_text.cid,
-              tid: response.qr_text.tid,
-              bill_id: response.qr_text.bill_id.toString(),
-              amount: response.qr_text.amount
-            });
-            patchState(store, setFulfilled());
-          });
-      };
-      const setComponentOptions = (inputParams: StartPaymentRequest) => {
-        patchState(store, {
-          resolution: +inputParams.data['width']
-        })
-
-        if (inputParams.data['lang']) {
-          translationService.currentLang = inputParams.data['lang'];
-        } else {
-          throw new Error(translationService.translate('LANG_NOT_SET'));
-        }
-
-        if (inputParams.is_test) return;
-
-        if (inputParams.data['environment']) {
-          patchState(store, {
-            environment: inputParams.data['environment']
-          });
-        } else {
-          throw new Error(translationService.translate('ENV_NOT_SET'));
-        }
-      };
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data?.type === 'SET_INPUT') {
-          setComponentOptions(event.data.payload.inputParams);
-          startPayment(event.data.payload.inputParams);
-        }
-        if (event.data?.type === 'SET_LANG') {
-          translationService.currentLang = event.data.payload.lang;
-        }
-      };
-      return {
-        mobileViewRedirect,
-        handleMessage
-      };
-    }
+      }
+    })
   ),
   withHooks({
     onInit(store) {
       patchState(store, setPending());
-      window.addEventListener('message', store.handleMessage.bind(this));
+      store.setWindowServices();
     }
   })
 );
+
+declare global {
+  interface Window {
+    keksPayService: KeksPayService;
+    translationService: TranslationService;
+    keksPayStore:
+      | Prettify<
+          SignalStoreSlices<object> &
+            SignalsDictionary &
+            MethodsDictionary &
+            StateSignal<object>
+        >
+      | unknown;
+  }
+}
