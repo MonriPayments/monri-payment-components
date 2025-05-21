@@ -131,7 +131,7 @@ export const GooglePayStore = signalStore(
       const getGooglePaymentsClient = () => {
         return new google.payments.api.PaymentsClient({
           paymentDataCallbacks: {
-            environment: store.inputParams().environment,
+            environment: store.inputParams().data['environment'],
             onPaymentAuthorized: (paymentData: any) =>
               onPaymentAuthorized(paymentData)
           }
@@ -204,7 +204,10 @@ export const GooglePayStore = signalStore(
             tap((response) => {
               const transactionStatus = response?.transaction?.status;
               if (transactionStatus === TransactionStatus.approved) {
-                resolve(response);
+                resolve({success: true, response});
+              }
+              if (transactionStatus === TransactionStatus.declined) {
+                reject({transactionState: 'INTERNAL_ERROR', error: {reason: 'PAYMENT_FAILED', message: ''}});
               }
             }),
             catchError((error) => {
