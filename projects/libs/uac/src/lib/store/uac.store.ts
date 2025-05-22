@@ -1,0 +1,119 @@
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState
+} from '@ngrx/signals';
+import {inject} from '@angular/core';
+import {TranslationService} from '../services/translation.service';
+import {setError, setFulfilled, setPending, withRequestStatus} from "./request-status.feature";
+import {UacMethodUtils} from "../utils/uac-method-utils";
+import {UacService} from "../services/uac.service";
+import {take} from "rxjs";
+
+export const UacStore = signalStore(
+  withRequestStatus(),
+  withState({
+    resolution: 0,
+    containerID: '' as string,
+    container: undefined as HTMLElement | undefined
+  }),
+  withComputed(store => ({})),
+  withMethods(
+    (
+      store,
+      translationService = inject(TranslationService),
+      uacService = inject(UacService)
+    ) => {
+      const applyInlineStyles = (userStyles: Record<string, Partial<CSSStyleDeclaration>>, container: HTMLElement) => {
+        const defaultStyles = UacMethodUtils.getDefaultStyles();
+        const mergedStyles: Record<string, Partial<CSSStyleDeclaration>> = {};
+
+        for (const key in defaultStyles) {
+          mergedStyles[key] = {
+            ...defaultStyles[key],
+            ...(userStyles[key] || {})
+          };
+        }
+
+        UacMethodUtils.applyStyles(container, mergedStyles);
+      };
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'SET_INPUT') {
+          const inputData = event.data.payload.inputParams;
+          const styleConfig = inputData.data.style || {};
+
+          if (inputData.payment_method === 'ips-rs') {
+            uacService.initiatePayment(
+              event.data.payload.inputParams.is_test ? 'ipgtest' : 'ipg',
+              inputData.payment_method,
+              inputData.data.trx_token
+            ).pipe(take(1))
+              .subscribe({
+                next: (response) => {
+                  if (UacMethodUtils.isUacRedirectComponent(inputData.payment_method)) {
+                    window.open(response.redirect_url, '_blank');
+                  } else {
+                    uacService.loadPaymentContent(response.redirect_url).pipe(take(1)).subscribe({
+                      next: (content) => {
+                        if (inputData.payment_method === 'ips-rs') {
+                          patchState(store, {
+                            containerID: 'ipsNBSContainer'
+                          })
+                          const container = document.getElementById(store.containerID());
+                          if (!container) return;
+                          container.innerHTML = content;
+                          if (container) {
+                            const scripts = container.querySelectorAll('script');
+                            scripts.forEach(script => {
+                              const newScript = document.createElement('script');
+                              if (script.src) {
+                                newScript.src = script.src;
+                                newScript.async = false;
+                                document.head.appendChild(newScript);
+                              } else {
+                                newScript.text = script.textContent || '';
+                                document.body.appendChild(newScript);
+                              }
+                            });
+                            UacMethodUtils.applyDefaultStyles(container);
+                            applyInlineStyles(styleConfig, container);
+                            patchState(store, setFulfilled());
+                          }
+                        }
+                      },
+                      error: (err) => {
+                        patchState(store, setError(err))
+                      }
+                    });
+
+                  }
+                },
+                error: (err) => {
+                  patchState(store, setError(err))
+                }
+              })
+
+          }
+        }
+
+        if (event.data?.type === 'SET_LANG') {
+          translationService.currentLang = event.data.payload.lang;
+        }
+      };
+
+      return {
+        handleMessage
+      };
+    }
+  ),
+  withHooks({
+    onInit(store) {
+      patchState(store, setPending());
+      window.addEventListener('message', store.handleMessage.bind(this));
+    }
+  })
+);

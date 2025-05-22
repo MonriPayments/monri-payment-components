@@ -1,0 +1,9 @@
+<div id="{{uacStore.containerID()}}">
+</div>
+@if (uacStore.isPending()) {
+  <div class="loading-indicator">Loading payment form...</div>
+} @else if (uacStore.error()) {
+  <div class="error-wrapper">
+    <span class="error-message">{{ uacStore.error().message}}</span>
+  </div>
+}

@@ -31,6 +31,13 @@ export const routes: Routes = [
           import('./components/apple-pay/apple-pay-showcase.component').then(
             x => x.ApplePayShowcaseComponent
           )
+      },
+      {
+        path: 'uac',
+        loadComponent: () =>
+          import('./components/uac/uac.component').then(
+            x => x.UacShowcaseComponent
+          )
       }
     ]
   }
