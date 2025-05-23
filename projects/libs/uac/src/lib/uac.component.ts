@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, effect, ElementRef, inject, viewChild} from '@angular/core';
 import {UacStore} from "./store/uac.store";
 import {UacService} from "./services/uac.service";
 
@@ -12,4 +12,13 @@ import {UacService} from "./services/uac.service";
 })
 export class UacComponent {
   protected readonly uacStore = inject(UacStore);
+  paymentContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('paymentContainer');
+
+  constructor() {
+    effect(() => {
+      if (this.uacStore.redirectURL()) {
+        this.uacStore.loadDivContent(this.paymentContainerRef())
+      }
+    });
+  }
 }

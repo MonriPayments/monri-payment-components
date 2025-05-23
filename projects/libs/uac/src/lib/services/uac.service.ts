@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
+import {from, Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +14,13 @@ export class UacService {
   }
 
   loadPaymentContent(url: string) {
-    return this.http.get(url, { responseType: 'text' });
+    return from(
+      fetch(url).then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content from ${url}`);
+        }
+        return response.text();
+      })
+    );
   }
 }

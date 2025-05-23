@@ -1,3 +1,5 @@
+import {ElementRef} from "@angular/core";
+
 export class UacMethodUtils {
   private static defaultStyles: Record<string, Partial<CSSStyleDeclaration>> = {
     container: {
@@ -71,74 +73,47 @@ export class UacMethodUtils {
   }
 
   public static applyStyles(
-    rootElement: HTMLElement,
+    rootElementRef: ElementRef<HTMLDivElement>,
     styles: Record<string, Partial<CSSStyleDeclaration>>
   ): void {
-    if (!rootElement) return;
+    if (!rootElementRef || !styles) return;
 
-    if (styles['container']) {
-      Object.assign(rootElement.style, styles['container']);
-    }
+    const rootElement = rootElementRef.nativeElement;
+    console.log('hamdija', styles, rootElement);
 
-    if (styles['descriptionRow']) {
-      const row = rootElement.querySelector('#ipsNBSContainer > div');
-      if (row) Object.assign((row as HTMLElement).style, styles['descriptionRow']);
-    }
+    const safeAssign = (el: HTMLElement | null, style?: Partial<CSSStyleDeclaration>) => {
+      if (el && style && typeof style === 'object') {
+        Object.assign(el.style, style);
+      }
+    };
 
-    if (styles['logo']) {
-      const logo = rootElement.querySelector('#ipsNBSContainer img');
-      if (logo) Object.assign((logo as HTMLImageElement).style, styles['logo']);
-    }
-
-    if (styles['qrCodeContainer']) {
-      const qrCode = rootElement.querySelector('#ipsNBSQRCodeContainer');
-      if (qrCode) Object.assign((qrCode as HTMLElement).style, styles['qrCodeContainer']);
-    }
-
-    if (styles['regenerateBtnContainer']) {
-      const btnContainer = rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate');
-      if (btnContainer) Object.assign((btnContainer as HTMLElement).style, styles['regenerateBtnContainer']);
-    }
-
-    if (styles['regenerateBtn']) {
-      const button = rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate button');
-      if (button) Object.assign((button as HTMLButtonElement).style, styles['regenerateBtn']);
-    }
-
-    if (styles['timer']) {
-      const timer = rootElement.querySelector('#ipsNBSQRCodeTimer');
-      if (timer) Object.assign((timer as HTMLElement).style, styles['timer']);
-    }
-
-    if (styles['ifMobile']) {
-      const ifMobile = rootElement.querySelector('#ipsNBSIfMobile');
-      if (ifMobile) Object.assign((ifMobile as HTMLElement).style, styles['ifMobile']);
-    }
-
-    if (styles['mobileLabel']) {
-      const label = rootElement.querySelector('#ipsNBSIfMobile label');
-      if (label) Object.assign((label as HTMLElement).style, styles['mobileLabel']);
-    }
+    safeAssign(rootElement, styles['container']);
+    safeAssign(rootElement.querySelector('#ipsNBSContainer > div') as HTMLElement, styles['descriptionRow']);
+    safeAssign(rootElement.querySelector('#ipsNBSContainer img') as HTMLImageElement, styles['logo']);
+    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainer'), styles['qrCodeContainer']);
+    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate'), styles['regenerateBtnContainer']);
+    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate button') as HTMLButtonElement, styles['regenerateBtn']);
+    safeAssign(rootElement.querySelector('#ipsNBSQRCodeTimer'), styles['timer']);
+    safeAssign(rootElement.querySelector('#ipsNBSIfMobile'), styles['ifMobile']);
+    safeAssign(rootElement.querySelector('#ipsNBSIfMobile label'), styles['mobileLabel']);
+    safeAssign(rootElement.querySelector('#ipsNBSBankSelect'), styles['bankSelect']);
 
     if (styles['radioLabel']) {
       rootElement.querySelectorAll('label[id^="ipsNBS"]').forEach(label => {
-        Object.assign((label as HTMLElement).style, styles['radioLabel']);
+        safeAssign(label as HTMLElement, styles['radioLabel']);
       });
     }
 
     if (styles['radioInput']) {
       rootElement.querySelectorAll('input[type="radio"]').forEach(input => {
-        Object.assign((input as HTMLInputElement).style, styles['radioInput']);
+        safeAssign(input as HTMLInputElement, styles['radioInput']);
       });
-    }
-
-    if (styles['bankSelect']) {
-      const select = rootElement.querySelector('#ipsNBSBankSelect');
-      if (select) Object.assign((select as HTMLElement).style, styles['bankSelect']);
     }
   }
 
-  public static applyDefaultStyles(container: HTMLElement): void {
+
+
+  public static applyDefaultStyles(container: ElementRef<HTMLDivElement>): void {
     const defaultStyles = this.getDefaultStyles();
     this.applyStyles(container, defaultStyles);
   }
