@@ -79,7 +79,8 @@ export class UacMethodUtils {
     if (!rootElementRef || !styles) return;
 
     const rootElement = rootElementRef.nativeElement;
-    console.log('hamdija', styles, rootElement);
+    const innerContent = rootElement.querySelector('#ipsNBSContainer') as HTMLElement;
+    if (!innerContent) return;
 
     const safeAssign = (el: HTMLElement | null, style?: Partial<CSSStyleDeclaration>) => {
       if (el && style && typeof style === 'object') {
@@ -87,31 +88,29 @@ export class UacMethodUtils {
       }
     };
 
-    safeAssign(rootElement, styles['container']);
-    safeAssign(rootElement.querySelector('#ipsNBSContainer > div') as HTMLElement, styles['descriptionRow']);
-    safeAssign(rootElement.querySelector('#ipsNBSContainer img') as HTMLImageElement, styles['logo']);
-    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainer'), styles['qrCodeContainer']);
-    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate'), styles['regenerateBtnContainer']);
-    safeAssign(rootElement.querySelector('#ipsNBSQRCodeContainerRegenerate button') as HTMLButtonElement, styles['regenerateBtn']);
-    safeAssign(rootElement.querySelector('#ipsNBSQRCodeTimer'), styles['timer']);
-    safeAssign(rootElement.querySelector('#ipsNBSIfMobile'), styles['ifMobile']);
-    safeAssign(rootElement.querySelector('#ipsNBSIfMobile label'), styles['mobileLabel']);
-    safeAssign(rootElement.querySelector('#ipsNBSBankSelect'), styles['bankSelect']);
+    safeAssign(innerContent, styles['container']);
+    safeAssign(innerContent.querySelector(':scope > div') as HTMLElement, styles['descriptionRow']);
+    safeAssign(innerContent.querySelector('img') as HTMLImageElement, styles['logo']);
+    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainer'), styles['qrCodeContainer']);
+    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate'), styles['regenerateBtnContainer']);
+    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate button') as HTMLButtonElement, styles['regenerateBtn']);
+    safeAssign(innerContent.querySelector('#ipsNBSQRCodeTimer'), styles['timer']);
+    safeAssign(innerContent.querySelector('#ipsNBSIfMobile'), styles['ifMobile']);
+    safeAssign(innerContent.querySelector('#ipsNBSIfMobile label'), styles['mobileLabel']);
+    safeAssign(innerContent.querySelector('#ipsNBSBankSelect'), styles['bankSelect']);
 
     if (styles['radioLabel']) {
-      rootElement.querySelectorAll('label[id^="ipsNBS"]').forEach(label => {
+      innerContent.querySelectorAll('label[id^="ipsNBS"]').forEach(label => {
         safeAssign(label as HTMLElement, styles['radioLabel']);
       });
     }
 
     if (styles['radioInput']) {
-      rootElement.querySelectorAll('input[type="radio"]').forEach(input => {
+      innerContent.querySelectorAll('input[type="radio"]').forEach(input => {
         safeAssign(input as HTMLInputElement, styles['radioInput']);
       });
     }
   }
-
-
 
   public static applyDefaultStyles(container: ElementRef<HTMLDivElement>): void {
     const defaultStyles = this.getDefaultStyles();

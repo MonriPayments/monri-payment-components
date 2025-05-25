@@ -11,13 +11,12 @@ import {TranslationService} from '../services/translation.service';
 import {setError, setFulfilled, setPending, withRequestStatus} from "./request-status.feature";
 import {UacMethodUtils} from "../utils/uac-method-utils";
 import {UacService} from "../services/uac.service";
-import {switchMap, take} from "rxjs";
+import {take} from "rxjs";
 
 export const UacStore = signalStore(
   withRequestStatus(),
   withState({
     resolution: 0,
-    containerID: '' as string,
     redirectURL: undefined as string | undefined,
     paymentMethod: undefined as string | undefined,
     styleConfig: undefined as Record<string, Partial<CSSStyleDeclaration>> | undefined,
@@ -52,7 +51,6 @@ export const UacStore = signalStore(
             paymentMethod: inputData.payment_method,
             styleConfig: inputData.data.style as Record<string, Partial<CSSStyleDeclaration>>
           }, setPending());
-          console.log(inputData, 'inputData');
 
           if (store.paymentMethod() === 'ips-rs') {
             uacService.initiatePayment(
@@ -85,17 +83,14 @@ export const UacStore = signalStore(
 
       const loadDivContent = (container: ElementRef) => {
         if (!store.redirectURL() || !container || !store.styleConfig()) {
-          console.error('redirect: ' + store.redirectURL() + ', style: ' + store.styleConfig())
-          return
+          console.error('redirect: ' + store.redirectURL() + ', style: ' + store.styleConfig());
+          return;
         }
-        uacService.loadPaymentContent(store.redirectURL()!).pipe(
-          take(1),
-        ).subscribe({
+
+        uacService.loadPaymentContent(store.redirectURL()!).pipe(take(1)).subscribe({
           next: (content) => {
             if (store.paymentMethod() === 'ips-rs') {
-              patchState(store, {
-                containerID: 'ipsNBSContainer'
-              })
+              console.log('hamdija3')
               container.nativeElement.innerHTML = content;
               if (container) {
                 const scripts = container.nativeElement.querySelectorAll('script');
