@@ -37,13 +37,9 @@ export const KeksPayStore = signalStore(
   withRequestStatus(),
   withComputed(store => ({
     url: computed(() => {
-      if (store.inputParams().is_test) {
-        return 'https://monri.com';
-      }
-
       return (
         'https://kekspay.hr/' +
-        store.environment() +
+        (store.environment() === 'test' ? 'galebpay' : 'pay') +
         '?' +
         '&qr_type=' +
         store.qr_type() +
@@ -94,8 +90,6 @@ export const KeksPayStore = signalStore(
         } else {
           throw new Error(translationService.translate('LANG_NOT_SET'));
         }
-
-        if (inputParams.is_test) return;
 
         if (inputParams.data['environment']) {
           patchState(store, {
