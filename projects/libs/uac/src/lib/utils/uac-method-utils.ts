@@ -21,6 +21,9 @@ export class UacMethodUtils {
       width: '100px',
       alignSelf: 'flex-start'
     },
+    text: {
+      display: 'block'
+    },
     qrCodeContainer: {
       width: '150px',
       height: '135px',
@@ -30,12 +33,12 @@ export class UacMethodUtils {
     },
     regenerateBtnContainer: {},
     regenerateBtn: {
-      backgroundColor: 'var(--monri-accent-background-soft-color)',
-      color: 'var(--monri-accent-color)',
+      backgroundColor: '#bcbcbc',
+      color: '#000',
       fontWeight: '400',
       borderRadius: '8px',
       border: 'none',
-      fontSize: 'var(--monri-normal-text-size)',
+      fontSize: '12px',
       padding: '0.4rem 1rem',
       cursor: 'pointer',
       transition: '0.3s ease-in-out'
@@ -64,7 +67,46 @@ export class UacMethodUtils {
       marginBottom: '1rem',
       padding: '0.5rem',
       borderRadius: '10px',
-      border: '1px solid var(--monri-gray-color)'
+      border: '1px solid #bcbcbc'
+    },
+    generateQRButton: {
+      backgroundColor: '#FCF5FF',
+      color: '#8132A7',
+      fontWeight: '400',
+      borderRadius: '8px',
+      borderColor: 'transparent',
+      fontSize: '12px',
+      padding: '0.2rem 0.9rem',
+      transition: '0.3s ease-in-out',
+      maxWidth: '150px',
+      margin: '0 auto',
+      display: 'block'
+    },
+    ifMobileButton: {
+      backgroundColor: '#FCF5FF',
+      color: '#8132A7',
+      fontWeight: '400',
+      borderRadius: '8px',
+      borderColor: 'transparent',
+      fontSize: '12px',
+      padding: '0.2rem 0.9rem',
+      transition: '0.3s ease-in-out',
+      maxWidth: '150px',
+      margin: '0 auto',
+      display: 'block'
+    },
+    bankLogoContainer: {
+      margin: '0 auto 2rem',
+      width: '240px'
+    },
+    ipsNBSPersonEntity: {
+      display: 'inline-flex',
+      alignContent: 'center',
+      marginRight: '1rem'
+    },
+    ipsNBSLegalEntity : {
+      display: 'inline-flex',
+      alignContent: 'center'
     }
   };
 
@@ -74,9 +116,10 @@ export class UacMethodUtils {
 
   public static applyStyles(
     rootElementRef: ElementRef<HTMLDivElement>,
-    styles: Record<string, Partial<CSSStyleDeclaration>>
+    styles: Record<string, Partial<CSSStyleDeclaration>>,
+    isMobile: boolean
   ): void {
-    if (!rootElementRef || !styles) return;
+    if (!rootElementRef) return;
 
     const rootElement = rootElementRef.nativeElement;
     const innerContent = rootElement.querySelector('#ipsNBSContainer') as HTMLElement;
@@ -88,54 +131,73 @@ export class UacMethodUtils {
       }
     };
 
-    // Apply styles to main container
     safeAssign(innerContent, styles['container']);
 
-    // Get all direct children divs
-    const childDivs = Array.from(innerContent.children).filter(
-      (el): el is HTMLElement => el.tagName === 'DIV'
-    );
+    if (!isMobile) {
+      const childDivs = Array.from(innerContent.children).filter(
+        (el): el is HTMLElement =>
+          el.tagName === 'DIV' && !el.classList.contains('right-container')
+      );
 
-    if (childDivs.length === 0) return;
+      if (childDivs.length === 0) return;
 
-    // Keep first div as-is (the one containing #ipsNBSText)
-    const firstDiv = childDivs[0];
-    safeAssign(firstDiv, styles['descriptionRow']);
-    safeAssign(firstDiv.querySelector('#ipsNBSText') as HTMLElement, styles['text']);
+      const firstDiv = childDivs[0];
+      safeAssign(firstDiv, styles['descriptionRow']);
+      safeAssign(firstDiv.querySelector('#ipsNBSText') as HTMLElement, styles['text']);
 
-    // Create right-container and apply style
-    let rightContainer = innerContent.querySelector('.right-container') as HTMLElement;
-    if (!rightContainer) {
-      rightContainer = document.createElement('div');
-      rightContainer.classList.add('right-container');
-      innerContent.appendChild(rightContainer);
+      let rightContainer = innerContent.querySelector('.right-container') as HTMLElement;
+      if (!rightContainer) {
+        rightContainer = document.createElement('div');
+        rightContainer.classList.add('right-container');
+        innerContent.appendChild(rightContainer);
+      }
+
+      safeAssign(rightContainer, styles['rightContainer']);
+
+      for (let i = 1; i < childDivs.length; i++) {
+        rightContainer.appendChild(childDivs[i]);
+      }
+
+      const selectors: Record<string, string> = {
+        logo: '#ipsNBSLogo',
+        qrCodeContainer: '#ipsNBSQRCodeContainer',
+        regenerateBtnContainer: '#ipsNBSQRCodeContainerRegenerate',
+        regenerateBtn: '#ipsNBSQRCodeContainerRegenerate button',
+        timer: '#ipsNBSQRCodeTimer',
+        ifMobile: '#ipsNBSIfMobile',
+        mobileLabel: '#ipsNBSIfMobile label',
+        bankSelect: '#ipsNBSBankSelect',
+        generateQRButton: '#generateIPSNBSPayment',
+        ifMobileButton: '#ipsNBSIfMobileButton',
+        bankLogoContainer: '#bankLogoContainer',
+        ipsNBSPersonEntity: '#ipsNBSPersonEntity',
+        ipsNBSLegalEntity: '#ipsNBSLegalEntity'
+      };
+
+      Object.entries(selectors).forEach(([styleKey, selector]) => {
+        const element = innerContent.querySelector(selector) as HTMLElement;
+        if (element) {
+          safeAssign(element, styles[styleKey]);
+        }
+      });
+    } else {
+      safeAssign(innerContent.querySelector(':scope > div') as HTMLElement, styles['descriptionRow']);
+      safeAssign(innerContent.querySelector('img') as HTMLImageElement, styles['logo']);
+      safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainer'), styles['qrCodeContainer']);
+      safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate'), styles['regenerateBtnContainer']);
+      safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate button') as HTMLButtonElement, styles['regenerateBtn']);
+      safeAssign(innerContent.querySelector('#ipsNBSQRCodeTimer'), styles['timer']);
+      safeAssign(innerContent.querySelector('#ipsNBSText'), styles['text']);
+      safeAssign(innerContent.querySelector('#ipsNBSIfMobile'), styles['ifMobile']);
+      safeAssign(innerContent.querySelector('#ipsNBSPersonEntity'), styles['ipsNBSPersonEntity']);
+      safeAssign(innerContent.querySelector('#ipsNBSLegalEntity'), styles['ipsNBSLegalEntity']);
+      safeAssign(innerContent.querySelector('#generateIPSNBSPayment'), styles['generateQRButton']);
+      safeAssign(innerContent.querySelector('#ipsNBSIfMobileButton'), styles['ifMobileButton']);
+      safeAssign(innerContent.querySelector('#bankLogoContainer'), styles['bankLogoContainer']);
+      safeAssign(innerContent.querySelector('#ipsNBSIfMobile label'), styles['mobileLabel']);
+      safeAssign(innerContent.querySelector('#ipsNBSBankSelect'), styles['bankSelect']);
     }
 
-    safeAssign(rightContainer, styles['rightContainer']);
-
-    // Move all other divs (except the first one) into right-container
-    for (let i = 1; i < childDivs.length; i++) {
-      rightContainer.appendChild(childDivs[i]);
-    }
-
-    // Style individual elements inside right-container, if specified
-    const selectors: Record<string, string> = {
-      logo: '#ipsNBSLogo',
-      qrCodeContainer: '#ipsNBSQRCodeContainer',
-      regenerateBtnContainer: '#ipsNBSQRCodeContainerRegenerate',
-      regenerateBtn: '#ipsNBSQRCodeContainerRegenerate button',
-      timer: '#ipsNBSQRCodeTimer',
-      ifMobile: '#ipsNBSIfMobile',
-      mobileLabel: '#ipsNBSIfMobile label',
-      bankSelect: '#ipsNBSBankSelect',
-      generateQRButton: '#generateIPSNBSPayment'
-    };
-
-    Object.entries(selectors).forEach(([styleKey, selector]) => {
-      safeAssign(innerContent.querySelector(selector) as HTMLElement, styles[styleKey]);
-    });
-
-    // Radio group styling
     if (styles['radioLabel']) {
       innerContent.querySelectorAll('label[id^="ipsNBS"]').forEach(label => {
         safeAssign(label as HTMLElement, styles['radioLabel']);
@@ -149,9 +211,22 @@ export class UacMethodUtils {
     }
   }
 
-  public static applyDefaultStyles(container: ElementRef<HTMLDivElement>): void {
+  public static applyDefaultStyles(
+    container: ElementRef<HTMLDivElement>,
+    isMobile: boolean,
+    userStyles: Record<string, Partial<CSSStyleDeclaration>> = {}
+  ): void {
     const defaultStyles = this.getDefaultStyles();
-    this.applyStyles(container, defaultStyles);
+    const mergedStyles: Record<string, Partial<CSSStyleDeclaration>> = {};
+
+    for (const key in defaultStyles) {
+      mergedStyles[key] = {
+        ...defaultStyles[key],
+        ...(userStyles[key] || {})
+      };
+    }
+
+    this.applyStyles(container, mergedStyles, isMobile);
   }
 
   public static isUacRedirectComponent(paymentMethod: string): boolean {

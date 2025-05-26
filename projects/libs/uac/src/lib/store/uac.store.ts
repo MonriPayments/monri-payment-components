@@ -6,7 +6,7 @@ import {
   withMethods,
   withState
 } from '@ngrx/signals';
-import {ChangeDetectorRef, ElementRef, inject} from '@angular/core';
+import {computed, ElementRef, inject} from '@angular/core';
 import {TranslationService} from '../services/translation.service';
 import {setError, setFulfilled, setPending, withRequestStatus} from "./request-status.feature";
 import {UacMethodUtils} from "../utils/uac-method-utils";
@@ -22,58 +22,46 @@ export const UacStore = signalStore(
     styleConfig: undefined as Record<string, Partial<CSSStyleDeclaration>> | undefined,
     container: undefined as HTMLElement | undefined
   }),
-  withComputed(store => ({})),
+  withComputed((store) => ({
+    isMobile: computed(() => store.resolution() <= 768)
+  })),
   withMethods(
     (
       store,
       translationService = inject(TranslationService),
-      uacService = inject(UacService),
-      cdr = inject(ChangeDetectorRef)
+      uacService = inject(UacService)
     ) => {
-      const applyInlineStyles = (userStyles: Record<string, Partial<CSSStyleDeclaration>>, container: ElementRef<HTMLDivElement>) => {
-        const defaultStyles = UacMethodUtils.getDefaultStyles();
-        const mergedStyles: Record<string, Partial<CSSStyleDeclaration>> = {};
-
-        for (const key in defaultStyles) {
-          mergedStyles[key] = {
-            ...defaultStyles[key],
-            ...(userStyles[key] || {})
-          };
-        }
-
-        UacMethodUtils.applyStyles(container, mergedStyles);
-      };
-
       const handleMessage = (event: MessageEvent) => {
         if (event.data?.type === 'SET_INPUT') {
           const inputData = event.data.payload.inputParams;
-          patchState(store, {
-            paymentMethod: inputData.payment_method,
-            styleConfig: inputData.data.style as Record<string, Partial<CSSStyleDeclaration>>
-          }, setPending());
 
-          if (store.paymentMethod() === 'ips-rs') {
-            uacService.initiatePayment(
-              event.data.payload.inputParams.is_test ? 'ipgtest' : 'ipg',
-              inputData.payment_method,
-              inputData.data.trx_token
-            ).pipe(take(1))
-              .subscribe({
-                next: (response) => {
-                  if (UacMethodUtils.isUacRedirectComponent(inputData.payment_method)) {
-                    window.open(response.redirect_url, '_blank');
-                  } else {
-                    patchState(store, {
-                      redirectURL: response.redirect_url
-                    })
-                  }
-                },
-                error: (err) => {
-                  patchState(store, setError(err))
-                }
-              })
-
+          patchState(store, {paymentMethod: inputData.payment_method});
+          if (inputData.data.style) {
+            patchState(store, {
+              styleConfig: inputData.data.style as Record<string, Partial<CSSStyleDeclaration>>,
+              resolution: inputData.data.width
+            }, setPending());
           }
+
+          uacService.initiatePayment(
+            event.data.payload.inputParams.is_test ? 'ipgtest' : 'ipg',
+            inputData.payment_method,
+            inputData.data.trx_token
+          ).pipe(take(1))
+            .subscribe({
+              next: (response) => {
+                if (UacMethodUtils.isUacRedirectComponent(inputData.payment_method)) {
+                  window.open(response.redirect_url, '_blank');
+                } else {
+                  patchState(store, {
+                    redirectURL: response.redirect_url
+                  })
+                }
+              },
+              error: (err) => {
+                patchState(store, setError(err))
+              }
+            })
         }
 
         if (event.data?.type === 'SET_LANG') {
@@ -108,15 +96,38 @@ export const UacStore = signalStore(
                 setTimeout(() => {
                   if (typeof (window as any).addFunctionsToDOM === 'function') {
                     (window as any).addFunctionsToDOM();
+
+                    const mobileElements = ['ipsNBSIfMobile', 'ipsNBSIfMobileButton'];
+                    const webElements = [
+                      'ipsNBSQRCodeContainer',
+                      'ipsNBSQRCodeTimer',
+                      'generateIPSNBSPayment'
+                    ];
+                    mobileElements.forEach(id => {
+                      const el = document.getElementById(id);
+                      if (el) {
+                        el.style.display = store.isMobile() ? 'block' : 'none';
+                      }
+                    });
+                    webElements.forEach(id => {
+                      const el = document.getElementById(id);
+                      if (el) {
+                        el.style.display = store.isMobile() ? 'none' : 'block';
+                      }
+                    });
+
+                    const timerEl = document.getElementById('ipsNBSContainer');
+                    if (timerEl) {
+                      timerEl.style.display = 'flex';
+                      timerEl.style.flexDirection = store.isMobile() ? 'column' : 'row';
+                    }
                   } else {
                     console.warn('addFunctionsToDOM is not defined on window');
                   }
                 }, 0);
 
-                UacMethodUtils.applyDefaultStyles(container);
-                applyInlineStyles(store.styleConfig()!, container);
+                UacMethodUtils.applyDefaultStyles(container, store.isMobile(), store.styleConfig());
                 patchState(store, setFulfilled());
-                cdr.detectChanges();
               }
             }
           },
