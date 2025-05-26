@@ -88,17 +88,54 @@ export class UacMethodUtils {
       }
     };
 
+    // Apply styles to main container
     safeAssign(innerContent, styles['container']);
-    safeAssign(innerContent.querySelector(':scope > div') as HTMLElement, styles['descriptionRow']);
-    safeAssign(innerContent.querySelector('img') as HTMLImageElement, styles['logo']);
-    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainer'), styles['qrCodeContainer']);
-    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate'), styles['regenerateBtnContainer']);
-    safeAssign(innerContent.querySelector('#ipsNBSQRCodeContainerRegenerate button') as HTMLButtonElement, styles['regenerateBtn']);
-    safeAssign(innerContent.querySelector('#ipsNBSQRCodeTimer'), styles['timer']);
-    safeAssign(innerContent.querySelector('#ipsNBSIfMobile'), styles['ifMobile']);
-    safeAssign(innerContent.querySelector('#ipsNBSIfMobile label'), styles['mobileLabel']);
-    safeAssign(innerContent.querySelector('#ipsNBSBankSelect'), styles['bankSelect']);
 
+    // Get all direct children divs
+    const childDivs = Array.from(innerContent.children).filter(
+      (el): el is HTMLElement => el.tagName === 'DIV'
+    );
+
+    if (childDivs.length === 0) return;
+
+    // Keep first div as-is (the one containing #ipsNBSText)
+    const firstDiv = childDivs[0];
+    safeAssign(firstDiv, styles['descriptionRow']);
+    safeAssign(firstDiv.querySelector('#ipsNBSText') as HTMLElement, styles['text']);
+
+    // Create right-container and apply style
+    let rightContainer = innerContent.querySelector('.right-container') as HTMLElement;
+    if (!rightContainer) {
+      rightContainer = document.createElement('div');
+      rightContainer.classList.add('right-container');
+      innerContent.appendChild(rightContainer);
+    }
+
+    safeAssign(rightContainer, styles['rightContainer']);
+
+    // Move all other divs (except the first one) into right-container
+    for (let i = 1; i < childDivs.length; i++) {
+      rightContainer.appendChild(childDivs[i]);
+    }
+
+    // Style individual elements inside right-container, if specified
+    const selectors: Record<string, string> = {
+      logo: '#ipsNBSLogo',
+      qrCodeContainer: '#ipsNBSQRCodeContainer',
+      regenerateBtnContainer: '#ipsNBSQRCodeContainerRegenerate',
+      regenerateBtn: '#ipsNBSQRCodeContainerRegenerate button',
+      timer: '#ipsNBSQRCodeTimer',
+      ifMobile: '#ipsNBSIfMobile',
+      mobileLabel: '#ipsNBSIfMobile label',
+      bankSelect: '#ipsNBSBankSelect',
+      generateQRButton: '#generateIPSNBSPayment'
+    };
+
+    Object.entries(selectors).forEach(([styleKey, selector]) => {
+      safeAssign(innerContent.querySelector(selector) as HTMLElement, styles[styleKey]);
+    });
+
+    // Radio group styling
     if (styles['radioLabel']) {
       innerContent.querySelectorAll('label[id^="ipsNBS"]').forEach(label => {
         safeAssign(label as HTMLElement, styles['radioLabel']);

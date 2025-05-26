@@ -90,7 +90,6 @@ export const UacStore = signalStore(
         uacService.loadPaymentContent(store.redirectURL()!).pipe(take(1)).subscribe({
           next: (content) => {
             if (store.paymentMethod() === 'ips-rs') {
-              console.log('hamdija3')
               container.nativeElement.innerHTML = content;
               if (container) {
                 const scripts = container.nativeElement.querySelectorAll('script');
