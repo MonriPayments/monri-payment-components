@@ -35,12 +35,15 @@ export const UacStore = signalStore(
         if (event.data?.type === 'SET_INPUT') {
           const inputData = event.data.payload.inputParams;
 
-          patchState(store, {paymentMethod: inputData.payment_method});
+          patchState(store, {paymentMethod: inputData.payment_method, resolution: inputData.data.width});
           if (inputData.data.style) {
             patchState(store, {
               styleConfig: inputData.data.style as Record<string, Partial<CSSStyleDeclaration>>,
-              resolution: inputData.data.width
-            }, setPending());
+            });
+          }
+
+          if (!UacMethodUtils.isUacRedirectComponent(inputData.payment_method)) {
+            patchState(store, setPending())
           }
 
           uacService.initiatePayment(
@@ -51,11 +54,9 @@ export const UacStore = signalStore(
             .subscribe({
               next: (response) => {
                 if (UacMethodUtils.isUacRedirectComponent(inputData.payment_method)) {
-                  window.open(response.redirect_url, '_blank');
+                  window.parent.postMessage({type: 'REDIRECT', data: response.redirect_url}, '*');
                 } else {
-                  patchState(store, {
-                    redirectURL: response.redirect_url
-                  })
+                  patchState(store, {redirectURL: response.redirect_url})
                 }
               },
               error: (err) => {
@@ -78,7 +79,14 @@ export const UacStore = signalStore(
         uacService.loadPaymentContent(store.redirectURL()!).pipe(take(1)).subscribe({
           next: (content) => {
             if (store.paymentMethod() === 'ips-rs') {
-              container.nativeElement.innerHTML = content;
+              let modifiedContent = content;
+
+              modifiedContent = modifiedContent.replace(
+                /width:\s*220px;/g,
+                `width: 100%; height: 100%;`
+              );
+
+              container.nativeElement.innerHTML = modifiedContent;
               if (container) {
                 const scripts = container.nativeElement.querySelectorAll('script');
                 scripts.forEach((script: any) => {
@@ -88,7 +96,14 @@ export const UacStore = signalStore(
                     newScript.async = false;
                     document.head.appendChild(newScript);
                   } else {
-                    newScript.text = script.textContent || '';
+                    let scriptText = script.textContent || '';
+
+                    scriptText = scriptText.replace(
+                      /window\.location\.href\s*=\s*deepLink\s*;/,
+                      `window.parent.postMessage({type: 'REDIRECT', data: deepLink}, '*');`
+                    );
+
+                    newScript.text = scriptText;
                     document.body.appendChild(newScript);
                   }
                 });

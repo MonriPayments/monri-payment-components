@@ -7,8 +7,31 @@ const sourceDir = path.join(
   '..',
   '..',
   'dist',
-  'uac-app',
-  'uac-component.js'
+  'keks-pay-app',
+  'keks-pay-component.js'
+);
+const sampleServerDir = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'MonriJS',
+  'sample-server',
+  'public',
+  'dist'
+);
+const bundlesDir = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'MonriJS',
+  'components',
+  'src',
+  'alternative_payments',
+  'bundles'
 );
 const webPayDir = path.join(
   __dirname,
@@ -16,13 +39,9 @@ const webPayDir = path.join(
   '..',
   '..',
   '..',
-  '..',
-  '..',
-  'IdeaProjects',
   'WebPay',
   'public',
-  'dist',
-  'alternative-payments'
+  'dist'
 );
 
 const emptyLine =
@@ -61,4 +80,6 @@ function buildBundles(source, targetDir) {
   console.log(borderColor + border + reset);
 }
 
+buildBundles(sourceDir, sampleServerDir);
+buildBundles(sourceDir, bundlesDir);
 buildBundles(sourceDir, webPayDir);

@@ -232,6 +232,7 @@ export class UacMethodUtils {
   public static isUacRedirectComponent(paymentMethod: string): boolean {
     switch (paymentMethod) {
       case 'flik-pay':
+      case 'air-cash':
         return true;
       default:
         return false;
