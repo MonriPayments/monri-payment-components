@@ -31,6 +31,13 @@ export const routes: Routes = [
           import('./components/apple-pay/apple-pay-showcase.component').then(
             x => x.ApplePayShowcaseComponent
           )
+      },
+      {
+        path: 'mc-click-to-pay',
+        loadComponent: () =>
+          import('./components/mc-click-to-pay/mc-click-to-pay-showcase.component').then(
+            x => x.MastercardClickToPayShowcaseComponent
+          )
       }
     ]
   }
