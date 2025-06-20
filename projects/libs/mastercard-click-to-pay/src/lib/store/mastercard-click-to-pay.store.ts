@@ -9,7 +9,7 @@ import {
 } from '@ngrx/signals';
 import {computed, inject} from '@angular/core';
 import {setPending, withRequestStatus} from './request-status.feature';
-import {MastercardClickToPayService} from '../services/mc-click-to-pay.service';
+import {MastercardClickToPayService} from '../services/mastercard-click-to-pay.service';
 import {MCTranslationService} from '../services/translation.service';
 import {Prettify} from '@ngrx/signals/src/ts-helpers';
 import {

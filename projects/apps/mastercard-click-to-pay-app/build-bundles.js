@@ -7,8 +7,8 @@ const sourceDir = path.join(
   '..',
   '..',
   'dist',
-  'keks-pay-app',
-  'keks-pay-component.js'
+  'mastercard-click-to-pay-app',
+  'mastercard-click-to-pay-component.js'
 );
 const sampleServerDir = path.join(
   __dirname,

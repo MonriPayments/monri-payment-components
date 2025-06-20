@@ -10,7 +10,8 @@
     "paths": {
       "google-pay": ["./dist/google-pay"],
       "keks-pay": ["./dist/keks-pay"],
-      "apple-pay": ["./dist/apple-pay"]
+      "apple-pay": ["./dist/apple-pay"],
+      "mastercard-click-to-pay": ["./dist/mastercard-click-to-pay"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

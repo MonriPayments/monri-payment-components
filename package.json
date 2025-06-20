@@ -14,7 +14,7 @@
     "build-keks-pay-library": "ng build keks-pay && ng build keks-pay-app && cd projects/apps/keks-pay-app && webpack && node build-bundles.js",
     "build-google-pay-library": "ng build google-pay && ng build google-pay-app && cd projects/apps/google-pay-app && webpack",
     "build-apple-pay-library": "ng build apple-pay && ng build apple-pay-app && cd projects/apps/apple-pay-app && webpack",
-    "build-mc-click-to-pay-library": "ng build mc-click-to-pay && ng build mc-click-to-pay-app && cd projects/apps/mc-click-to-pay-app && webpack && node build-bundles.js"
+    "build-mastercard-click-to-pay-library": "ng build mastercard-click-to-pay && ng build mastercard-click-to-pay-app && cd projects/apps/mastercard-click-to-pay-app && webpack && node build-bundles.js"
   },
   "private": true,
   "dependencies": {

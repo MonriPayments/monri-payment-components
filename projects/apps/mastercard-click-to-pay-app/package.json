@@ -1,0 +1,5 @@
+{
+  "name": "mastercard-click-to-pay-app",
+  "version": "0.0.1",
+  "main": "mastercard-click-to-pay-bundle.js"
+}

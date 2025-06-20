@@ -1,20 +1,20 @@
 import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
-import { MastercardClickToPayService } from './services/mc-click-to-pay.service';
+import { MastercardClickToPayService } from './services/mastercard-click-to-pay.service';
 import { QRCodeModule } from 'angularx-qrcode';
 import { take } from 'rxjs';
 import { StartPaymentRequest } from './interfaces/alternative-payment-method.interface';
 import { MCTranslationService } from './services/translation.service';
 import { MCTranslatePipe } from './pipes/translate.pipe';
-import { MastercardClickToPayStore } from './store/mc-click-to-pay.store';
+import { MastercardClickToPayStore } from './store/mastercard-click-to-pay.store';
 import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
 
 @Component({
-  selector: 'lib-mc-click-to-pay',
+  selector: 'lib-mastercard-click-to-pay',
   standalone: true,
   imports: [QRCodeModule, MCTranslatePipe],
-  templateUrl: 'mc-click-to-pay.component.html',
-  styleUrl: 'mc-click-to-pay.component.scss',
+  templateUrl: 'mastercard-click-to-pay.component.html',
+  styleUrl: 'mastercard-click-to-pay.component.scss',
   providers: [MastercardClickToPayService, MCTranslationService, MastercardClickToPayStore]
 })
 export class MastercardClickToPayComponent implements OnInit {

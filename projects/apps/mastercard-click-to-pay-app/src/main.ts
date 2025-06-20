@@ -1,7 +1,7 @@
 import { createApplication } from '@angular/platform-browser';
 import { appConfig } from './main.config';
 import { createCustomElement } from '@angular/elements';
-import { MastercardClickToPayComponent } from 'mc-click-to-pay';
+import { MastercardClickToPayComponent } from 'mastercard-click-to-pay';
 import { ApplicationRef } from '@angular/core';
 
 (async () => {
@@ -9,5 +9,5 @@ import { ApplicationRef } from '@angular/core';
   const mastercardClickToPayComponent = createCustomElement(MastercardClickToPayComponent, {
     injector: app.injector
   });
-  customElements.define('lib-mc-click-to-pay', mastercardClickToPayComponent);
+  customElements.define('lib-mastercard-click-to-pay', mastercardClickToPayComponent);
 })();

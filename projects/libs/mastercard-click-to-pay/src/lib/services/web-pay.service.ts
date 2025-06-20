@@ -18,7 +18,7 @@ export class WebPayService {
     // url had http://localhost:3000 at the start, but should work without it
     // add it if the post is not successful (only in test env)
     return this.httpClient.post<StartPaymentResponse>(
-      `/v2/direct-payment/mc-click-to-pay/${req.data['trx_token']}/start-payment`,
+      `/v2/direct-payment/mastercard-click-to-pay/${req.data['trx_token']}/start-payment`,
       JSON.stringify({}),
       { headers }
     );
