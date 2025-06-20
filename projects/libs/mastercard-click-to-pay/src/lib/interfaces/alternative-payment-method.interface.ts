@@ -14,13 +14,11 @@ export type StartPaymentResponse = {
   status: string;
   product: string;
   acquirer: string;
-  input_timeout: number;
-  qr_text: {
-    qr_type: string;
-    cid: string;
-    tid: string;
-    bill_id: number;
-    amount: string;
-    currency: string;
-  };
+
+  checkout_url?: string;
+  session_id?: string;
+  locale?: string;
+
+  button_style?: string;
+  [key: string]: any;
 };

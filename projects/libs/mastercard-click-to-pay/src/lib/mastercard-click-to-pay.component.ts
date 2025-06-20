@@ -15,69 +15,83 @@ import { setFulfilled } from './store/request-status.feature';
   imports: [QRCodeModule, MCTranslatePipe],
   templateUrl: 'mastercard-click-to-pay.component.html',
   styleUrl: 'mastercard-click-to-pay.component.scss',
-  providers: [MastercardClickToPayService, MCTranslationService, MastercardClickToPayStore]
+  providers: [
+    MastercardClickToPayService,
+    MCTranslationService,
+    MastercardClickToPayStore
+  ]
 })
 export class MastercardClickToPayComponent implements OnInit {
-  private readonly _mastercardClickToPayService: MastercardClickToPayService = inject(MastercardClickToPayService);
-  private readonly _translationService: MCTranslationService =
-    inject(MCTranslationService);
-  readonly mastercardClickToPayStore = inject(MastercardClickToPayStore);
+  readonly store = inject(MastercardClickToPayStore);
+  private readonly _service = inject(MastercardClickToPayService);
+  private readonly _translation = inject(MCTranslationService);
+
+  @Input() set inputParams(value: StartPaymentRequest) {
+    patchState(this.store, { inputParams: value });
+    console.log(
+      'Mastercard Click To Pay inputParams:',
+      this.store.inputParams()
+    );
+    this.store.onLoad();
+  }
+
+  get mastercardClickToPayService(): MastercardClickToPayService {
+    return this._service;
+  }
+
+  get translationService(): MCTranslationService {
+    return this._translation;
+  }
 
   @HostListener('window:resize', ['$event'])
   onResize() {
-    patchState(this.mastercardClickToPayStore, { resolution: window.innerWidth });
+    patchState(this.store, { resolution: window.innerWidth });
   }
 
   ngOnInit(): void {
-    this.setComponentOptions();
+    this.validateInputParams();
     this.startPayment();
   }
 
   private startPayment() {
-    this.mastercardClickToPayService
-      .startPayment(this.mastercardClickToPayStore.inputParams())
+    const input = this.store.inputParams();
+
+    if (input.is_test) {
+      patchState(this.store, setFulfilled());
+      return;
+    }
+
+    this._service
+      .startPayment(input)
       .pipe(take(1))
       .subscribe(response => {
-        patchState(this.mastercardClickToPayStore, {
-          qr_type: '1',
-          cid: response.qr_text.cid,
-          tid: response.qr_text.tid,
-          //TODO: change bill_id to number and test
-          bill_id: response.qr_text.bill_id.toString(),
-          amount: response.qr_text.amount
+        patchState(this.store, {
+          // primjer što bi mogao biti response iz Mastercard servisa:
+          checkoutUrl: response.checkout_url,
+          buttonStyle: input.data['buttonStyle'] || 'default'
+          // dodaj sve što trebaš iz response
         });
-        patchState(this.mastercardClickToPayStore, setFulfilled());
+        patchState(this.store, setFulfilled());
       });
   }
 
-  private setComponentOptions() {
-    if (this.mastercardClickToPayStore.inputParams().data['lang']) {
-      this.translationService.currentLang =
-        this.mastercardClickToPayStore.inputParams().data['lang'];
-    } else {
-      throw new Error(this.translationService.translate('LANG_NOT_SET'));
+  private validateInputParams() {
+    const data = this.store.inputParams().data;
+
+    if (!data['locale']) {
+      throw new Error(this._translation.translate('LOCALE_NOT_SET'));
     }
 
-    if (this.mastercardClickToPayStore.inputParams().is_test) return;
-
-    if (this.mastercardClickToPayStore.inputParams().data['environment']) {
-      patchState(this.mastercardClickToPayStore, {
-        environment: this.mastercardClickToPayStore.inputParams().data['environment']
-      });
-    } else {
-      throw new Error(this.translationService.translate('ENV_NOT_SET'));
+    if (!data['srcDpaId']) {
+      throw new Error(this._translation.translate('DPA_ID_NOT_SET'));
     }
-  }
 
-  @Input() set inputParams(value: StartPaymentRequest) {
-    patchState(this.mastercardClickToPayStore, { inputParams: value });
-  }
+    if (!this.store.inputParams().is_test && !data['environment']) {
+      throw new Error(this._translation.translate('ENV_NOT_SET'));
+    }
 
-  get mastercardClickToPayService(): MastercardClickToPayService {
-    return this._mastercardClickToPayService;
-  }
-
-  get translationService(): MCTranslationService {
-    return this._translationService;
+    if (data['environment']) {
+      patchState(this.store, { environment: data['environment'] });
+    }
   }
 }
