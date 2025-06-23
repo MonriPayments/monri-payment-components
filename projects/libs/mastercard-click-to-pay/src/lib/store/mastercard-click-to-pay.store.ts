@@ -17,6 +17,22 @@ import {
   SignalsDictionary,
   SignalStoreSlices
 } from '@ngrx/signals/src/signal-store-models';
+import {
+  MastercardInitRequest,
+  MastercardInitResponse,
+  MaskedCard,
+  AuthenticateRequest,
+  AuthenticateResponse,
+  EncryptCardRequest,
+  EncryptCardResponse,
+  CheckoutWithNewCardRequest,
+  CheckoutWithNewCardResponse,
+  Consumer,
+  ConsumerIdentity,
+  WindowRef,
+  MastercardCheckoutService,
+  MastercardCheckoutServices
+} from '../interfaces/mastercard-click-to-pay.interface';
 
 export const MastercardClickToPayStore = signalStore(
   withState({
@@ -29,8 +45,8 @@ export const MastercardClickToPayStore = signalStore(
     buttonStyle: '',
     environment: '',
     availableCardBrands: [] as Array<string>,
-    availableServices: [],
-    maskedCards: [],
+    availableServices: [] as Array<string>,
+    maskedCards: [] as MaskedCard[],
     encryptedCard: '',
     cardBrand: ''
   }),
@@ -112,14 +128,16 @@ export const MastercardClickToPayStore = signalStore(
 
         try {
           const mcCheckoutService = new MastercardCheckoutServices();
-          const initData = {
+          const initData: MastercardInitRequest = {
             srcDpaId: store.srcDpaId(),
             dpaData: { dpaName: 'Testdpa0' },
             dpaTransactionOptions: { dpaLocale: store.locale() },
             cardBrands: ['mastercard', 'visa']
           };
 
-          const result = await mcCheckoutService.init(initData);
+          const result: MastercardInitResponse = await mcCheckoutService.init(
+            initData
+          );
           window.mcCheckoutServices = mcCheckoutService;
           patchState(store, {
             availableCardBrands: result['availableCardBrands'],
@@ -138,7 +156,8 @@ export const MastercardClickToPayStore = signalStore(
         }
 
         try {
-          const cardsResponse = await window.mcCheckoutServices.getCards();
+          const cardsResponse: MaskedCard[] =
+            await window.mcCheckoutServices.getCards();
           patchState(store, { maskedCards: cardsResponse });
           console.log('getCards response:', cardsResponse);
         } catch (error) {
@@ -162,7 +181,7 @@ export const MastercardClickToPayStore = signalStore(
         }
 
         try {
-          let consumerIdentity;
+          let consumerIdentity: ConsumerIdentity;
 
           const modal = createModal();
 
@@ -171,27 +190,28 @@ export const MastercardClickToPayStore = signalStore(
               identityType: 'MOBILE_PHONE_NUMBER',
               identityValue: phone
             };
-          } else {
+          } else if (email) {
             consumerIdentity = {
               identityType: 'EMAIL_ADDRESS',
               identityValue: email
             };
+          } else {
+            throw new Error(
+              'Either phone number or email address must be provided'
+            );
           }
 
-          //const popup = openCenteredPopup('', 480, 600);
-          //window.currentPopup = popup;
-
-          const authenticateData = {
-            windowRef: modal,
+          const authenticateData: AuthenticateRequest = {
+            windowRef: modal as WindowRef,
             accountReference: {
               consumerIdentity
             },
             requestRecognitionToken: true
           };
 
-          const authenticateResponse =
+          const authenticateResponse: AuthenticateResponse =
             await window.mcCheckoutServices.authenticate(authenticateData);
-          patchState(store, { maskedCards: authenticateResponse.cards });
+          patchState(store, { maskedCards: authenticateResponse.cards || [] });
           console.log('authenticate response:', authenticateResponse);
 
           // Close popup after successful authentication
@@ -209,9 +229,9 @@ export const MastercardClickToPayStore = signalStore(
         }
 
         try {
-          const encryptCardResponse =
+          const encryptCardResponse: EncryptCardResponse =
             await window.mcCheckoutServices.encryptCard(
-              store.encryptCardParams()
+              store.encryptCardParams() as EncryptCardRequest
             );
           patchState(store, {
             encryptedCard: encryptCardResponse.encryptedCard,
@@ -234,11 +254,8 @@ export const MastercardClickToPayStore = signalStore(
 
           const modal = createModal();
 
-          //const popup = openCenteredPopup('', 480, 600);
-          //window.currentPopup = popup;
-
-          const checkoutWithNewCardData: any = {
-            windowRef: modal,
+          const checkoutWithNewCardData: CheckoutWithNewCardRequest = {
+            windowRef: modal as WindowRef,
             encryptedCard: store.encryptedCard(),
             cardBrand: store.cardBrand(),
             recognitionTokenRequested: true
@@ -251,19 +268,21 @@ export const MastercardClickToPayStore = signalStore(
               mobileNumber: consumer.mobileNumber,
               firstName: consumer.firstName,
               lastName: consumer.lastName
-            };
+            } as Consumer;
           }
 
           console.log(checkoutWithNewCardData);
 
-          const checkoutWithNewCardResponse =
+          const checkoutWithNewCardResponse: CheckoutWithNewCardResponse =
             await window.mcCheckoutServices.checkoutWithNewCard(
               checkoutWithNewCardData
             );
 
           patchState(store, {
-            maskedCards:
-              checkoutWithNewCardResponse.checkoutResponseData.maskedCard
+            maskedCards: checkoutWithNewCardResponse.checkoutResponseData
+              ?.maskedCard
+              ? [checkoutWithNewCardResponse.checkoutResponseData.maskedCard]
+              : []
           });
 
           console.log(
@@ -313,6 +332,7 @@ export const MastercardClickToPayStore = signalStore(
         const iframe = document.createElement('iframe');
         iframe.style.width = '100%';
         iframe.style.height = '100%';
+        iframe.style.border = '0';
         modal.appendChild(iframe);
 
         return iframe.contentWindow;
@@ -321,62 +341,9 @@ export const MastercardClickToPayStore = signalStore(
       const closeModal = () => {
         if (window.currentModal) {
           window.currentModal.remove();
-          window.currentModal = null;
+          window.currentModal = undefined;
         }
       };
-
-      /*
-      const openCenteredPopup = (
-        url: string,
-        width: number,
-        height: number
-      ) => {
-        // Get the screen's width and height
-        const screenWidth =
-          window.innerWidth ||
-          document.documentElement.clientWidth ||
-          window.screen.width;
-        const screenHeight =
-          window.innerHeight ||
-          document.documentElement.clientHeight ||
-          window.screen.height;
-
-        // Calculate the left and top position to center the popup
-        const left = (screenWidth - width) / 2;
-        const top = (screenHeight - height) / 2;
-
-        console.log(left, top);
-
-        // Open the popup with the calculated dimensions and position
-        const popup = window.open(
-          url,
-          '_blank',
-          `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,menubar=no,toolbar=no,location=no,status=no`
-        );
-
-        if (!popup) {
-          alert('Pop-up blocked! Please allow pop-ups for this site.');
-          return null;
-        }
-
-        popup.document.body.style.margin = '0';
-        popup.document.body.style.display = 'flex';
-        popup.document.body.style.justifyContent = 'center';
-        popup.document.body.style.alignItems = 'center';
-        popup.document.body.style.height = '100vh';
-
-        // Optional: focus the new window
-        popup.focus();
-        return popup;
-      };
-
-      const closeCurrentPopup = () => {
-        if (window.currentPopup && !window.currentPopup.closed) {
-          window.currentPopup.close();
-          window.currentPopup = null;
-        }
-      };
-      */
 
       const createConsentComponent = () => {
         const consentComponent = renderer.createElement('src-consent');
@@ -474,11 +441,10 @@ export const MastercardClickToPayStore = signalStore(
 
 declare global {
   interface Window {
-    currentPopup?: any;
-    currentModal?: any;
-    mcCheckoutServices?: any;
-    MastercardCheckoutServices?: any;
-    MastercardClickToPaySession?: any;
+    currentModal?: HTMLElement;
+    mcCheckoutServices: MastercardCheckoutService;
+    MastercardCheckoutServices?: MastercardCheckoutServices;
+    MastercardClickToPaySession?: unknown;
     mastercardClickToPayService: MastercardClickToPayService;
     mastercardClickToPayStore:
       | Prettify<
