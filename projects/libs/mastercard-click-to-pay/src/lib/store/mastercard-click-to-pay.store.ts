@@ -28,7 +28,7 @@ export const MastercardClickToPayStore = signalStore(
     checkoutUrl: '',
     buttonStyle: '',
     environment: '',
-    availableCardBrands: [],
+    availableCardBrands: [] as Array<string>,
     availableServices: [],
     maskedCards: [],
     encryptedCard: '',
@@ -121,8 +121,10 @@ export const MastercardClickToPayStore = signalStore(
 
           const result = await mcCheckoutService.init(initData);
           window.mcCheckoutServices = mcCheckoutService;
-          store.availableCardBrands = result['availableCardBrands'];
-          store.availableServices = result['availableServices'];
+          patchState(store, {
+            availableCardBrands: result['availableCardBrands'],
+            availableServices: result['availableServices']
+          });
 
           console.log('Mastercard Click to Pay init successful');
         } catch (error) {
@@ -137,7 +139,7 @@ export const MastercardClickToPayStore = signalStore(
 
         try {
           const cardsResponse = await window.mcCheckoutServices.getCards();
-          store.maskedCards = cardsResponse;
+          patchState(store, { maskedCards: cardsResponse });
           console.log('getCards response:', cardsResponse);
         } catch (error) {
           console.error('getCards failed:', error);
@@ -189,14 +191,14 @@ export const MastercardClickToPayStore = signalStore(
 
           const authenticateResponse =
             await window.mcCheckoutServices.authenticate(authenticateData);
-          store.maskedCards = authenticateResponse.cards;
+          patchState(store, { maskedCards: authenticateResponse.cards });
           console.log('authenticate response:', authenticateResponse);
 
           // Close popup after successful authentication
-          closeCurrentPopup();
+          closeModal();
         } catch (error) {
           console.error('authenticate failed:', error);
-          closeCurrentPopup();
+          closeModal();
         }
       };
 
@@ -211,8 +213,10 @@ export const MastercardClickToPayStore = signalStore(
             await window.mcCheckoutServices.encryptCard(
               store.encryptCardParams()
             );
-          store.encryptedCard = encryptCardResponse.encryptedCard;
-          store.cardBrand = encryptCardResponse.cardBrand;
+          patchState(store, {
+            encryptedCard: encryptCardResponse.encryptedCard,
+            cardBrand: encryptCardResponse.cardBrand
+          });
           console.log('encryptCard response:', encryptCardResponse);
         } catch (error) {
           console.error('encryptCard failed:', error);
@@ -235,8 +239,8 @@ export const MastercardClickToPayStore = signalStore(
 
           const checkoutWithNewCardData: any = {
             windowRef: modal,
-            encryptedCard: store.encryptedCard,
-            cardBrand: store.cardBrand,
+            encryptedCard: store.encryptedCard(),
+            cardBrand: store.cardBrand(),
             recognitionTokenRequested: true
           };
 
@@ -257,16 +261,21 @@ export const MastercardClickToPayStore = signalStore(
               checkoutWithNewCardData
             );
 
+          patchState(store, {
+            maskedCards:
+              checkoutWithNewCardResponse.checkoutResponseData.maskedCard
+          });
+
           console.log(
             'checkoutWithNewCard response:',
             checkoutWithNewCardResponse
           );
 
           // Close popup after successful checkout
-          closeCurrentPopup();
+          closeModal();
         } catch (error) {
           console.error('checkoutWithNewCard failed:', error);
-          closeCurrentPopup();
+          closeModal();
         }
       };
 
@@ -283,7 +292,14 @@ export const MastercardClickToPayStore = signalStore(
         modalWrapper.style.alignItems = 'center';
         modalWrapper.style.zIndex = '10000';
 
+        modalWrapper.addEventListener('click', e => {
+          if (e.target === modalWrapper) {
+            closeModal();
+          }
+        });
+
         document.body.appendChild(modalWrapper);
+        window.currentModal = modalWrapper;
 
         const modal = document.createElement('div');
         modal.style.width = '480px';
@@ -302,6 +318,14 @@ export const MastercardClickToPayStore = signalStore(
         return iframe.contentWindow;
       };
 
+      const closeModal = () => {
+        if (window.currentModal) {
+          window.currentModal.remove();
+          window.currentModal = null;
+        }
+      };
+
+      /*
       const openCenteredPopup = (
         url: string,
         width: number,
@@ -352,6 +376,7 @@ export const MastercardClickToPayStore = signalStore(
           window.currentPopup = null;
         }
       };
+      */
 
       const createConsentComponent = () => {
         const consentComponent = renderer.createElement('src-consent');
@@ -387,7 +412,7 @@ export const MastercardClickToPayStore = signalStore(
           el.nativeElement.querySelector('#container-mastercard'),
           cardListComponent
         );
-        cardListComponent.loadCards(store.maskedCards);
+        cardListComponent.loadCards(store.maskedCards());
       };
 
       const onLoad = async () => {
@@ -403,17 +428,17 @@ export const MastercardClickToPayStore = signalStore(
           await Promise.all([uiStyle, uiScript]);
 
           await getCards();
-          if (store.maskedCards.length > 0) {
+          if (store.maskedCards().length > 0) {
             // User has saved cards
-            console.log('User has saved cards:', store.maskedCards);
+            console.log('User has saved cards:', store.maskedCards());
             createCardListComponent();
           } else {
             // User has no saved cards
             await authenticate();
 
-            if (store.maskedCards.length > 0) {
+            if (store.maskedCards().length > 0) {
               // User has saved cards after authenticate
-              console.log('User has saved cards:', store.maskedCards);
+              console.log('User has saved cards:', store.maskedCards());
               createCardListComponent();
             } else {
               // User has no saved cards after authenticate
@@ -450,6 +475,7 @@ export const MastercardClickToPayStore = signalStore(
 declare global {
   interface Window {
     currentPopup?: any;
+    currentModal?: any;
     mcCheckoutServices?: any;
     MastercardCheckoutServices?: any;
     MastercardClickToPaySession?: any;
