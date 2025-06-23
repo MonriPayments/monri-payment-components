@@ -7,7 +7,7 @@ import {
   patchState,
   StateSignal
 } from '@ngrx/signals';
-import { computed, ElementRef, inject, Renderer2 } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { withRequestStatus, setPending } from './request-status.feature';
 import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
@@ -68,12 +68,7 @@ export const MastercardClickToPayStore = signalStore(
     )
   })),
   withMethods(
-    (
-      store,
-      renderer = inject(Renderer2),
-      el = inject(ElementRef),
-      mastercardService = inject(MastercardClickToPayService)
-    ) => {
+    (store, mastercardService = inject(MastercardClickToPayService)) => {
       const getScriptDomain = () =>
         store.environment() === 'production'
           ? 'https://src.mastercard.com'
@@ -81,23 +76,23 @@ export const MastercardClickToPayStore = signalStore(
 
       const loadScript = (src: string, type?: string) => {
         return new Promise((resolve, reject) => {
-          const script = renderer.createElement('script');
+          const script = document.createElement('script');
           script.src = src;
           if (type) script.type = type;
           script.onload = resolve;
           script.onerror = reject;
-          renderer.appendChild(document.body, script);
+          document.body.appendChild(script);
         });
       };
 
       const loadStylesheet = (href: string) => {
         return new Promise((resolve, reject) => {
-          const link = renderer.createElement('link');
+          const link = document.createElement('link');
           link.href = href;
           link.rel = 'stylesheet';
           link.onload = resolve;
           link.onerror = reject;
-          renderer.appendChild(document.head, link);
+          document.head.appendChild(link);
         });
       };
 
@@ -165,7 +160,10 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
-      const authenticate = async () => {
+      const authenticate = async (
+        createModal: () => Window | null,
+        closeModal: () => void
+      ) => {
         if (!window.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
@@ -243,7 +241,10 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
-      const checkoutWithNewCard = async () => {
+      const checkoutWithNewCard = async (
+        createModal: () => Window | null,
+        closeModal: () => void
+      ) => {
         if (!window.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
@@ -298,91 +299,10 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
-      const createModal = () => {
-        const modalWrapper = document.createElement('div');
-        modalWrapper.style.position = 'fixed';
-        modalWrapper.style.top = '0';
-        modalWrapper.style.left = '0';
-        modalWrapper.style.width = '100vw';
-        modalWrapper.style.height = '100vh';
-        modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        modalWrapper.style.display = 'flex';
-        modalWrapper.style.justifyContent = 'center';
-        modalWrapper.style.alignItems = 'center';
-        modalWrapper.style.zIndex = '10000';
-
-        modalWrapper.addEventListener('click', e => {
-          if (e.target === modalWrapper) {
-            closeModal();
-          }
-        });
-
-        document.body.appendChild(modalWrapper);
-        window.currentModal = modalWrapper;
-
-        const modal = document.createElement('div');
-        modal.style.width = '480px';
-        modal.style.height = '600px';
-        modal.style.backgroundColor = 'white';
-        modal.style.borderRadius = '8px';
-        modal.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
-
-        modalWrapper.appendChild(modal);
-
-        const iframe = document.createElement('iframe');
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = '0';
-        modal.appendChild(iframe);
-
-        return iframe.contentWindow;
-      };
-
-      const closeModal = () => {
-        if (window.currentModal) {
-          window.currentModal.remove();
-          window.currentModal = undefined;
-        }
-      };
-
-      const createConsentComponent = () => {
-        const consentComponent = renderer.createElement('src-consent');
-        renderer.setAttribute(consentComponent, 'locale', store.locale());
-        renderer.setAttribute(consentComponent, 'dcf-suppressed', 'true');
-        renderer.setAttribute(consentComponent, 'display-remember-me', 'false');
-        if (store.darkTheme()) {
-          renderer.setAttribute(consentComponent, 'dark', '');
-        }
-        renderer.appendChild(
-          el.nativeElement.querySelector('#container-mastercard'),
-          consentComponent
-        );
-      };
-
-      const createCardListComponent = () => {
-        const cardListComponent = renderer.createElement('src-card-list');
-        renderer.setAttribute(cardListComponent, 'locale', store.locale());
-        renderer.setAttribute(
-          cardListComponent,
-          'card-brands',
-          store.availableCardBrands().join(',')
-        );
-        renderer.setAttribute(
-          cardListComponent,
-          'card-selection-type',
-          'radioButton'
-        );
-        if (store.darkTheme()) {
-          renderer.setAttribute(cardListComponent, 'dark', '');
-        }
-        renderer.appendChild(
-          el.nativeElement.querySelector('#container-mastercard'),
-          cardListComponent
-        );
-        cardListComponent.loadCards(store.maskedCards());
-      };
-
-      const onLoad = async () => {
+      const onLoad = async (
+        createModal: () => Window | null,
+        closeModal: () => void
+      ) => {
         try {
           const [mastercardScript, uiStyle, uiScript] = [
             loadMastercardScript(),
@@ -395,24 +315,13 @@ export const MastercardClickToPayStore = signalStore(
           await Promise.all([uiStyle, uiScript]);
 
           await getCards();
-          if (store.maskedCards().length > 0) {
-            // User has saved cards
-            console.log('User has saved cards:', store.maskedCards());
-            createCardListComponent();
-          } else {
-            // User has no saved cards
-            await authenticate();
 
-            if (store.maskedCards().length > 0) {
-              // User has saved cards after authenticate
-              console.log('User has saved cards:', store.maskedCards());
-              createCardListComponent();
-            } else {
-              // User has no saved cards after authenticate
-              createConsentComponent();
+          if (store.maskedCards().length === 0) {
+            await authenticate(createModal, closeModal);
 
+            if (store.maskedCards().length === 0) {
               await encryptCard();
-              await checkoutWithNewCard();
+              await checkoutWithNewCard(createModal, closeModal);
             }
           }
         } catch (err) {
@@ -427,7 +336,11 @@ export const MastercardClickToPayStore = signalStore(
 
       return {
         onLoad,
-        setWindowServices
+        setWindowServices,
+        getCards,
+        authenticate,
+        encryptCard,
+        checkoutWithNewCard
       };
     }
   ),

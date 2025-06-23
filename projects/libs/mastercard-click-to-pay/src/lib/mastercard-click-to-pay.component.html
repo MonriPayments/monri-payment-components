@@ -1,49 +1,21 @@
 <div class="container">
-  <!--
-  @if (mastercardClickToPayStore.isLoading()) {
-  <div class="container-loading-wrapper">
-    <div class="container-loading-wrapper-spinner"></div>
-  </div>
-  } @else if (mastercardClickToPayStore.isMobileView()) {
-  <div class="container-mobile-view-redirect">
-    <p>{{ 'MOBILE_VIEW_REDIRECT_MESSAGE' | translate }}</p>
-    <button
-      (click)="mastercardClickToPayStore.mobileViewRedirect()"
-      class="container-mobile-view-redirect-button"
-    >
-      <p>{{ 'MOBILE_VIEW_REDIRECT' | translate }}</p>
-    </button>
-  </div>
-  } @else {
-  <div class="container-qr">
-    <div class="container-qr-instruction">
-      <p>{{ 'FIRST_STEP' | translate }}</p>
-      <div class="container-qr-instruction-icon-wrapper">
-        <p>{{ 'SECOND_STEP_PREFIX' | translate }}</p>
-        <div class="container-qr-instruction-icon-wrapper-svg"></div>
-        <p>{{ 'SECOND_STEP_SUFFIX' | translate }}</p>
-      </div>
-      <p>{{ 'THIRD_STEP' | translate }}</p>
-      <p>{{ 'FORTH_STEP' | translate }}</p>
-    </div>
-    <qrcode
-      [qrdata]="mastercardClickToPayStore.url()"
-      [colorDark]="'#9396A6'"
-      [cssClass]="'max-size'"
-      [margin]="0"
-    />
-  </div>
-  }
--->
-  <div class="container">
-  <!--  @if (applePayStore.isPending()) {-->
-  <!--    <div class="container-loading-wrapper">-->
-  <!--      <div class="container-loading-wrapper-spinner"></div>-->
-  <!--    </div>-->
-  <!--  } @else {-->
   <div id="container-mastercard">
-    <p id="message"></p>
+    @if (store.maskedCards().length > 0) {
+      <src-card-list 
+        [attr.locale]="store.locale()"
+        [attr.card-brands]="store.availableCardBrands().join(',')"
+        [attr.card-selection-type]="'radioButton'"
+        [attr.dark]="store.darkTheme() ? '' : null"
+        #cardList>
+      </src-card-list>
+    } @else {
+      <src-consent 
+        [attr.locale]="store.locale()"
+        [attr.dcf-suppressed]="'true'"
+        [attr.display-remember-me]="'false'"
+        [attr.dark]="store.darkTheme() ? '' : null">
+      </src-consent>
+    }
   </div>
-  <!--  }-->
 </div>
-</div>
+

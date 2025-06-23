@@ -1,4 +1,18 @@
-import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  inject,
+  Input,
+  OnInit,
+  CUSTOM_ELEMENTS_SCHEMA,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  effect,
+  Injector,
+  runInInjectionContext,
+  afterNextRender
+} from '@angular/core';
 import { MastercardClickToPayService } from './services/mastercard-click-to-pay.service';
 import { take } from 'rxjs';
 import { StartPaymentRequest } from './interfaces/alternative-payment-method.interface';
@@ -11,11 +25,15 @@ import { setFulfilled } from './store/request-status.feature';
   standalone: true,
   templateUrl: 'mastercard-click-to-pay.component.html',
   styleUrl: 'mastercard-click-to-pay.component.scss',
-  providers: [MastercardClickToPayService, MastercardClickToPayStore]
+  providers: [MastercardClickToPayService, MastercardClickToPayStore],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class MastercardClickToPayComponent implements OnInit {
+export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
+  private readonly injector = inject(Injector);
   readonly store = inject(MastercardClickToPayStore);
   private readonly _service = inject(MastercardClickToPayService);
+
+  @ViewChild('cardList', { static: false }) cardListRef?: ElementRef;
 
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
@@ -23,7 +41,10 @@ export class MastercardClickToPayComponent implements OnInit {
       'Mastercard Click To Pay inputParams:',
       this.store.inputParams()
     );
-    this.store.onLoad();
+    this.store.onLoad(
+      () => this.createModal(),
+      () => this.closeModal()
+    );
   }
 
   get mastercardClickToPayService(): MastercardClickToPayService {
@@ -40,6 +61,30 @@ export class MastercardClickToPayComponent implements OnInit {
     this.startPayment();
   }
 
+  ngAfterViewInit(): void {
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        const cards = this.store.maskedCards();
+        if (cards.length > 0) {
+          this.loadCardsIntoComponent(cards);
+        }
+      });
+    });
+  }
+
+  private loadCardsIntoComponent(cards: unknown[]): void {
+    if (!this.cardListRef) {
+      afterNextRender(() => {
+        this.loadCardsIntoComponent(cards);
+      }, { injector: this.injector });
+      return;
+    }
+    
+    if (this.cardListRef?.nativeElement?.loadCards) {
+      this.cardListRef.nativeElement.loadCards(cards);
+    }
+  }
+
   private startPayment() {
     const input = this.store.inputParams();
 
@@ -53,9 +98,7 @@ export class MastercardClickToPayComponent implements OnInit {
       .pipe(take(1))
       .subscribe(response => {
         patchState(this.store, {
-          // primjer što bi mogao biti response iz Mastercard servisa:
           checkoutUrl: response.checkout_url
-          // dodaj sve što trebaš iz response
         });
         patchState(this.store, setFulfilled());
       });
@@ -78,6 +121,55 @@ export class MastercardClickToPayComponent implements OnInit {
 
     if (data['environment']) {
       patchState(this.store, { environment: data['environment'] });
+    }
+  }
+
+  createModal() {
+    const modalWrapper = document.createElement('div');
+    modalWrapper.style.position = 'fixed';
+    modalWrapper.style.top = '0';
+    modalWrapper.style.left = '0';
+    modalWrapper.style.width = '100vw';
+    modalWrapper.style.height = '100vh';
+    modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modalWrapper.style.display = 'flex';
+    modalWrapper.style.justifyContent = 'center';
+    modalWrapper.style.alignItems = 'center';
+    modalWrapper.style.zIndex = '10000';
+
+    modalWrapper.addEventListener('click', e => {
+      if (e.target === modalWrapper) {
+        this.closeModal();
+      }
+    });
+
+    document.body.appendChild(modalWrapper);
+    (window as unknown as { currentModal?: HTMLElement }).currentModal =
+      modalWrapper;
+
+    const modal = document.createElement('div');
+    modal.style.width = '480px';
+    modal.style.height = '600px';
+    modal.style.backgroundColor = 'white';
+    modal.style.borderRadius = '8px';
+    modal.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+
+    modalWrapper.appendChild(modal);
+
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = '0';
+    modal.appendChild(iframe);
+
+    return iframe.contentWindow;
+  }
+
+  closeModal() {
+    const windowWithModal = window as unknown as { currentModal?: HTMLElement };
+    if (windowWithModal.currentModal) {
+      windowWithModal.currentModal.remove();
+      windowWithModal.currentModal = undefined;
     }
   }
 }
