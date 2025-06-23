@@ -67,8 +67,7 @@ export class MastercardClickToPayComponent implements OnInit {
       .subscribe(response => {
         patchState(this.store, {
           // primjer što bi mogao biti response iz Mastercard servisa:
-          checkoutUrl: response.checkout_url,
-          buttonStyle: input.data['buttonStyle'] || 'default'
+          checkoutUrl: response.checkout_url
           // dodaj sve što trebaš iz response
         });
         patchState(this.store, setFulfilled());

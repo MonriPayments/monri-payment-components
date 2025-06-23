@@ -7,7 +7,28 @@ export interface AlternativePaymentMethodInterface {
 export type StartPaymentRequest = {
   payment_method: string;
   is_test?: boolean;
-  data: { [k: string]: string };
+  data: {
+    darkTheme?: boolean;
+    locale: string;
+    srcDpaId: string;
+    environment?: string;
+    consumer?: {
+      email?: string;
+      mobileNumber?: {
+        phoneNumber: string;
+        countryCode: string;
+      };
+      firstName?: string;
+      lastName?: string;
+    };
+    encryptCardParams?: {
+      primaryAccountNumber: string;
+      panExpirationMonth: string;
+      panExpirationYear: string;
+      cardSecurityCode: string;
+    };
+    [k: string]: any;
+  };
 };
 
 export type StartPaymentResponse = {

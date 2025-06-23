@@ -27,12 +27,29 @@ export const MastercardClickToPayStore = signalStore(
     resolution: window.innerWidth,
     checkoutUrl: '',
     buttonStyle: '',
-    environment: ''
+    environment: '',
+    availableCardBrands: [],
+    availableServices: [],
+    maskedCards: [],
+    encryptedCard: '',
+    cardBrand: ''
   }),
   withRequestStatus(),
   withComputed(store => ({
     locale: computed(() => store.inputParams().data['locale']),
-    srcDpaId: computed(() => store.inputParams().data['srcDpaId'])
+    srcDpaId: computed(() => store.inputParams().data['srcDpaId']),
+    darkTheme: computed(() => store.inputParams().data['darkTheme'] || false),
+    email: computed(() => store.inputParams().data['consumer']?.email),
+    phone: computed(() => {
+      const consumer = store.inputParams().data['consumer'];
+      if (consumer?.mobileNumber) {
+        return `+${consumer.mobileNumber.countryCode}${consumer.mobileNumber.phoneNumber}`;
+      }
+      return undefined;
+    }),
+    encryptCardParams: computed(
+      () => store.inputParams().data['encryptCardParams'] || undefined
+    )
   })),
   withMethods(
     (
@@ -103,92 +120,275 @@ export const MastercardClickToPayStore = signalStore(
           };
 
           const result = await mcCheckoutService.init(initData);
-          window.mcCheckoutServices = result;
-          console.log('Mastercard Click to Pay init successful:', result);
+          window.mcCheckoutServices = mcCheckoutService;
+          store.availableCardBrands = result['availableCardBrands'];
+          store.availableServices = result['availableServices'];
+
+          console.log('Mastercard Click to Pay init successful');
         } catch (error) {
           console.error('Mastercard Click to Pay init() failed:', error);
         }
       };
 
+      const getCards = async () => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+        }
+
+        try {
+          const cardsResponse = await window.mcCheckoutServices.getCards();
+          store.maskedCards = cardsResponse;
+          console.log('getCards response:', cardsResponse);
+        } catch (error) {
+          console.error('getCards failed:', error);
+        }
+      };
+
+      const authenticate = async () => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+          return;
+        }
+
+        const phone = store.phone();
+        const email = store.email();
+
+        if (!phone && !email) {
+          throw new Error(
+            'Either phone number or email address must be provided for authentication'
+          );
+        }
+
+        try {
+          let consumerIdentity;
+
+          const modal = createModal();
+
+          if (phone) {
+            consumerIdentity = {
+              identityType: 'MOBILE_PHONE_NUMBER',
+              identityValue: phone
+            };
+          } else {
+            consumerIdentity = {
+              identityType: 'EMAIL_ADDRESS',
+              identityValue: email
+            };
+          }
+
+          //const popup = openCenteredPopup('', 480, 600);
+          //window.currentPopup = popup;
+
+          const authenticateData = {
+            windowRef: modal,
+            accountReference: {
+              consumerIdentity
+            },
+            requestRecognitionToken: true
+          };
+
+          const authenticateResponse =
+            await window.mcCheckoutServices.authenticate(authenticateData);
+          store.maskedCards = authenticateResponse.cards;
+          console.log('authenticate response:', authenticateResponse);
+
+          // Close popup after successful authentication
+          closeCurrentPopup();
+        } catch (error) {
+          console.error('authenticate failed:', error);
+          closeCurrentPopup();
+        }
+      };
+
+      const encryptCard = async () => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+          return;
+        }
+
+        try {
+          const encryptCardResponse =
+            await window.mcCheckoutServices.encryptCard(
+              store.encryptCardParams()
+            );
+          store.encryptedCard = encryptCardResponse.encryptedCard;
+          store.cardBrand = encryptCardResponse.cardBrand;
+          console.log('encryptCard response:', encryptCardResponse);
+        } catch (error) {
+          console.error('encryptCard failed:', error);
+        }
+      };
+
+      const checkoutWithNewCard = async () => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+          return;
+        }
+
+        try {
+          const consumer = store.inputParams().data['consumer'];
+
+          const modal = createModal();
+
+          //const popup = openCenteredPopup('', 480, 600);
+          //window.currentPopup = popup;
+
+          const checkoutWithNewCardData: any = {
+            windowRef: modal,
+            encryptedCard: store.encryptedCard,
+            cardBrand: store.cardBrand,
+            recognitionTokenRequested: true
+          };
+
+          // Add consumer data if available
+          if (consumer) {
+            checkoutWithNewCardData.consumer = {
+              emailAddress: consumer.email,
+              mobileNumber: consumer.mobileNumber,
+              firstName: consumer.firstName,
+              lastName: consumer.lastName
+            };
+          }
+
+          console.log(checkoutWithNewCardData);
+
+          const checkoutWithNewCardResponse =
+            await window.mcCheckoutServices.checkoutWithNewCard(
+              checkoutWithNewCardData
+            );
+
+          console.log(
+            'checkoutWithNewCard response:',
+            checkoutWithNewCardResponse
+          );
+
+          // Close popup after successful checkout
+          closeCurrentPopup();
+        } catch (error) {
+          console.error('checkoutWithNewCard failed:', error);
+          closeCurrentPopup();
+        }
+      };
+
+      const createModal = () => {
+        const modalWrapper = document.createElement('div');
+        modalWrapper.style.position = 'fixed';
+        modalWrapper.style.top = '0';
+        modalWrapper.style.left = '0';
+        modalWrapper.style.width = '100vw';
+        modalWrapper.style.height = '100vh';
+        modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modalWrapper.style.display = 'flex';
+        modalWrapper.style.justifyContent = 'center';
+        modalWrapper.style.alignItems = 'center';
+        modalWrapper.style.zIndex = '10000';
+
+        document.body.appendChild(modalWrapper);
+
+        const modal = document.createElement('div');
+        modal.style.width = '480px';
+        modal.style.height = '600px';
+        modal.style.backgroundColor = 'white';
+        modal.style.borderRadius = '8px';
+        modal.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+
+        modalWrapper.appendChild(modal);
+
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        modal.appendChild(iframe);
+
+        return iframe.contentWindow;
+      };
+
+      const openCenteredPopup = (
+        url: string,
+        width: number,
+        height: number
+      ) => {
+        // Get the screen's width and height
+        const screenWidth =
+          window.innerWidth ||
+          document.documentElement.clientWidth ||
+          window.screen.width;
+        const screenHeight =
+          window.innerHeight ||
+          document.documentElement.clientHeight ||
+          window.screen.height;
+
+        // Calculate the left and top position to center the popup
+        const left = (screenWidth - width) / 2;
+        const top = (screenHeight - height) / 2;
+
+        console.log(left, top);
+
+        // Open the popup with the calculated dimensions and position
+        const popup = window.open(
+          url,
+          '_blank',
+          `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,menubar=no,toolbar=no,location=no,status=no`
+        );
+
+        if (!popup) {
+          alert('Pop-up blocked! Please allow pop-ups for this site.');
+          return null;
+        }
+
+        popup.document.body.style.margin = '0';
+        popup.document.body.style.display = 'flex';
+        popup.document.body.style.justifyContent = 'center';
+        popup.document.body.style.alignItems = 'center';
+        popup.document.body.style.height = '100vh';
+
+        // Optional: focus the new window
+        popup.focus();
+        return popup;
+      };
+
+      const closeCurrentPopup = () => {
+        if (window.currentPopup && !window.currentPopup.closed) {
+          window.currentPopup.close();
+          window.currentPopup = null;
+        }
+      };
+
       const createConsentComponent = () => {
         const consentComponent = renderer.createElement('src-consent');
+        renderer.setAttribute(consentComponent, 'locale', store.locale());
+        renderer.setAttribute(consentComponent, 'dcf-suppressed', 'true');
+        renderer.setAttribute(consentComponent, 'display-remember-me', 'false');
+        if (store.darkTheme()) {
+          renderer.setAttribute(consentComponent, 'dark', '');
+        }
         renderer.appendChild(
           el.nativeElement.querySelector('#container-mastercard'),
           consentComponent
         );
       };
 
-      /*
-      const createApplePayButton = () => {
-        const applePayButton = renderer.createElement('apple-pay-button');
-        renderer.setAttribute(applePayButton, 'id', 'apple-pay-button');
+      const createCardListComponent = () => {
+        const cardListComponent = renderer.createElement('src-card-list');
+        renderer.setAttribute(cardListComponent, 'locale', store.locale());
         renderer.setAttribute(
-          applePayButton,
-          'buttonstyle',
-          store.appleButtonStyle().buttonStyle || 'black'
+          cardListComponent,
+          'card-brands',
+          store.availableCardBrands().join(',')
         );
         renderer.setAttribute(
-          applePayButton,
-          'type',
-          store.appleButtonStyle().buttonType
+          cardListComponent,
+          'card-selection-type',
+          'radioButton'
         );
-        renderer.setAttribute(
-          applePayButton,
-          'locale',
-          store.appleButtonStyle().locale
-        );
-
+        if (store.darkTheme()) {
+          renderer.setAttribute(cardListComponent, 'dark', '');
+        }
         renderer.appendChild(
-          el.nativeElement.querySelector('#container-apple'),
-          applePayButton
+          el.nativeElement.querySelector('#container-mastercard'),
+          cardListComponent
         );
-        renderer.listen(
-          applePayButton,
-          'click',
-          onApplePayButtonClick.bind(this)
-        );
+        cardListComponent.loadCards(store.maskedCards);
       };
-      */
-
-      /*
-      const onMastercardButtonClick = () => {
-        const mcCheckoutServices = window.mcCheckoutServices;
-        if (!mcCheckoutServices) {
-          console.error('Mastercard Click to Pay nije inicijaliziran.');
-          return;
-        }
-
-        console.log('Pokreni Click to Pay tok...');
-        // TODO: Dodaj custom logiku, otvori modal, redirect, getCards(), itd.
-      };
-
-      const createClickToPayButton = () => {
-        const button = renderer.createElement('button');
-        renderer.setAttribute(button, 'id', 'mastercard-clicktopay-button');
-        renderer.setStyle(button, 'background', '#F79E1B');
-        renderer.setStyle(button, 'color', '#000');
-        renderer.setStyle(button, 'padding', '12px 24px');
-        renderer.setStyle(button, 'border', 'none');
-        renderer.setStyle(button, 'borderRadius', '8px');
-        renderer.setStyle(button, 'fontWeight', 'bold');
-        renderer.setStyle(button, 'cursor', 'pointer');
-        renderer.setProperty(
-          button,
-          'innerText',
-          'Click to Pay with Mastercard'
-        );
-
-        const container = el.nativeElement.querySelector(
-          '#container-mastercard'
-        );
-        if (container) {
-          renderer.appendChild(container, button);
-          renderer.listen(button, 'click', onMastercardButtonClick);
-        } else {
-          console.warn('#container-mastercard nije pronađen u DOM-u.');
-        }
-      };
-      */
 
       const onLoad = async () => {
         try {
@@ -201,7 +401,28 @@ export const MastercardClickToPayStore = signalStore(
           await mastercardScript;
           await initClickToPay();
           await Promise.all([uiStyle, uiScript]);
-          createConsentComponent();
+
+          await getCards();
+          if (store.maskedCards.length > 0) {
+            // User has saved cards
+            console.log('User has saved cards:', store.maskedCards);
+            createCardListComponent();
+          } else {
+            // User has no saved cards
+            await authenticate();
+
+            if (store.maskedCards.length > 0) {
+              // User has saved cards after authenticate
+              console.log('User has saved cards:', store.maskedCards);
+              createCardListComponent();
+            } else {
+              // User has no saved cards after authenticate
+              createConsentComponent();
+
+              await encryptCard();
+              await checkoutWithNewCard();
+            }
+          }
         } catch (err) {
           console.error('Error loading Mastercard Click to Pay:', err);
         }
@@ -228,6 +449,7 @@ export const MastercardClickToPayStore = signalStore(
 
 declare global {
   interface Window {
+    currentPopup?: any;
     mcCheckoutServices?: any;
     MastercardCheckoutServices?: any;
     MastercardClickToPaySession?: any;

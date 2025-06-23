@@ -2,6 +2,7 @@ import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { MastercardClickToPayComponent } from '../../../../../libs/mastercard-click-to-pay/src/lib/mastercard-click-to-pay.component';
 import { createCustomElement } from '@angular/elements';
 import { StartPaymentRequest } from '../../../../../libs/mastercard-click-to-pay/src/lib/interfaces/alternative-payment-method.interface';
+import { environment } from './environments/environment';
 
 interface MastercardClickToPayElement extends HTMLElement {
   inputParams: StartPaymentRequest;
@@ -42,7 +43,11 @@ export class MastercardClickToPayShowcaseComponent
     mastercardClickToPayElement.inputParams = {
       data: {
         locale: 'en_US',
-        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0'
+        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0',
+        darkTheme: false,
+        production: environment.production || '',
+        consumer: environment.consumer || undefined,
+        encryptCardParams: environment.encryptCardParams || undefined
       },
       payment_method: 'mastercard-click-to-pay',
       is_test: true
