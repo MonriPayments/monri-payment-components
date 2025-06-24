@@ -46,6 +46,13 @@ export const MastercardClickToPayStore = signalStore(
     checkoutUrl: '',
     buttonStyle: '',
     environment: '',
+    cardBrands: [
+      'mastercard',
+      'maestro',
+      'visa',
+      'amex',
+      'discover'
+    ] as Array<string>,
     availableCardBrands: [] as Array<string>,
     availableServices: [] as Array<string>,
     maskedCards: [] as MaskedCard[],
@@ -68,7 +75,24 @@ export const MastercardClickToPayStore = signalStore(
     }),
     encryptCardParams: computed(
       () => store.inputParams().data['encryptCardParams'] || undefined
-    )
+    ),
+    orderedAvailableCardBrands: computed(() => {
+      const available = store.availableCardBrands();
+      const predefinedOrder = store.cardBrands();
+
+      return predefinedOrder.filter(brand => available.includes(brand));
+    }),
+    orderedAvailableCardBrandsWithMapping: computed(() => {
+      const available = store.availableCardBrands();
+      const predefinedOrder = store.cardBrands();
+
+      const filtered = predefinedOrder.filter(brand =>
+        available.includes(brand)
+      );
+      return filtered.map(brand =>
+        brand === 'amex' ? 'american-express' : brand
+      );
+    })
   })),
   withMethods(
     (store, mastercardService = inject(MastercardClickToPayService)) => {
@@ -130,7 +154,7 @@ export const MastercardClickToPayStore = signalStore(
             srcDpaId: store.srcDpaId(),
             dpaData: { dpaName: 'Testdpa0' },
             dpaTransactionOptions: { dpaLocale: store.locale() },
-            cardBrands: ['mastercard', 'visa']
+            cardBrands: store.cardBrands()
           };
 
           const result: MastercardInitResponse = await mcCheckoutService.init(
@@ -138,11 +162,11 @@ export const MastercardClickToPayStore = signalStore(
           );
           window.mcCheckoutServices = mcCheckoutService;
           patchState(store, {
-            availableCardBrands: result['availableCardBrands'],
-            availableServices: result['availableServices']
+            availableCardBrands: result.availableCardBrands,
+            availableServices: result.availableServices
           });
 
-          console.log('Mastercard Click to Pay init successful');
+          console.log('Mastercard Click to Pay init successful', result);
         } catch (error) {
           console.error('Mastercard Click to Pay init() failed:', error);
         }
