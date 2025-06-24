@@ -27,6 +27,8 @@ import {
   EncryptCardResponse,
   CheckoutWithNewCardRequest,
   CheckoutWithNewCardResponse,
+  SignOutRequest,
+  SignOutResponse,
   Consumer,
   ConsumerIdentity,
   WindowRef,
@@ -48,7 +50,8 @@ export const MastercardClickToPayStore = signalStore(
     availableServices: [] as Array<string>,
     maskedCards: [] as MaskedCard[],
     encryptedCard: '',
-    cardBrand: ''
+    cardBrand: '',
+    selectedCardId: '' as string
   }),
   withRequestStatus(),
   withComputed(store => ({
@@ -299,6 +302,33 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
+      const signOut = async (
+        recognitionToken?: string
+      ): Promise<SignOutResponse | undefined> => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+          return undefined;
+        }
+
+        try {
+          const signOutData: SignOutRequest = {};
+          if (recognitionToken) {
+            signOutData.recognitionToken = recognitionToken;
+          }
+
+          const signOutResponse: SignOutResponse =
+            await window.mcCheckoutServices.signOut(signOutData);
+
+          patchState(store, { maskedCards: signOutResponse.cards || [] });
+          console.log('signOut response:', signOutResponse);
+
+          return signOutResponse;
+        } catch (error) {
+          console.error('signOut failed:', error);
+          return undefined;
+        }
+      };
+
       const onLoad = async (
         createModal: () => Window | null,
         closeModal: () => void
@@ -340,7 +370,8 @@ export const MastercardClickToPayStore = signalStore(
         getCards,
         authenticate,
         encryptCard,
-        checkoutWithNewCard
+        checkoutWithNewCard,
+        signOut
       };
     }
   ),

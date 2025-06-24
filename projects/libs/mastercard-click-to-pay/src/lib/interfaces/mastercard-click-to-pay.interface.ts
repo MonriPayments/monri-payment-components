@@ -327,6 +327,15 @@ export interface CheckoutWithNewCardResponse {
   checkoutResponseData?: CheckoutResponseData;
 }
 
+export interface SignOutRequest {
+  recognitionToken?: string;
+}
+
+export interface SignOutResponse {
+  recognized: boolean;
+  cards: MaskedCard[];
+}
+
 export interface MastercardCheckoutService {
   init(data: MastercardInitRequest): Promise<MastercardInitResponse>;
   getCards(): Promise<MaskedCard[]>;
@@ -338,6 +347,7 @@ export interface MastercardCheckoutService {
   checkoutWithCard(
     data: CheckoutWithCardRequest
   ): Promise<CheckoutWithCardResponse>;
+  signOut(data: SignOutRequest): Promise<SignOutResponse>;
 }
 
 export interface MastercardCheckoutServices {

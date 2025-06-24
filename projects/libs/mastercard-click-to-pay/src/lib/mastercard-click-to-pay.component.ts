@@ -74,15 +74,47 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
   private loadCardsIntoComponent(cards: unknown[]): void {
     if (!this.cardListRef) {
-      afterNextRender(() => {
-        this.loadCardsIntoComponent(cards);
-      }, { injector: this.injector });
+      afterNextRender(
+        () => {
+          this.loadCardsIntoComponent(cards);
+        },
+        { injector: this.injector }
+      );
       return;
     }
-    
+
     if (this.cardListRef?.nativeElement?.loadCards) {
       this.cardListRef.nativeElement.loadCards(cards);
+      this.setupCardSelectionListener();
     }
+  }
+
+  private setupCardSelectionListener(): void {
+    if (this.cardListRef?.nativeElement) {
+      this.cardListRef.nativeElement.addEventListener(
+        'selectSrcDigitalCardId',
+        (event: CustomEvent) => {
+          console.log('Selected card ID:', event.detail);
+          this.onCardSelected(event.detail);
+        }
+      );
+
+      this.cardListRef.nativeElement.addEventListener(
+        'clickSignOutLink',
+        (event: CustomEvent) => {
+          console.log('Sign out link clicked:', event.detail);
+          this.onSignOut(event.detail);
+        }
+      );
+    }
+  }
+
+  private onCardSelected(srcDigitalCardId: string): void {
+    patchState(this.store, { selectedCardId: srcDigitalCardId });
+  }
+
+  private onSignOut(detail: { recognitionToken?: string }): void {
+    this.store.signOut(detail?.recognitionToken);
   }
 
   private startPayment() {
@@ -93,15 +125,12 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    this._service
-      .startPayment(input)
-      .pipe(take(1))
-      .subscribe(response => {
-        patchState(this.store, {
-          checkoutUrl: response.checkout_url
-        });
+    this._service.startPayment(input).pipe(take(1));
+    /*.subscribe(response => {
+        patchState(this.store, {});
         patchState(this.store, setFulfilled());
       });
+      */
   }
 
   private validateInputParams() {

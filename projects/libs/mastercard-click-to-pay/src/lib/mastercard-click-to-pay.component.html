@@ -6,6 +6,7 @@
         [attr.card-brands]="store.availableCardBrands().join(',')"
         [attr.card-selection-type]="'radioButton'"
         [attr.dark]="store.darkTheme() ? '' : null"
+        [attr.display-sign-out]="'true'"
         #cardList>
       </src-card-list>
     } @else {
