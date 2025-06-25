@@ -196,7 +196,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     modalWrapper.style.left = '0';
     modalWrapper.style.width = '100vw';
     modalWrapper.style.height = '100vh';
-    modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
     modalWrapper.style.display = 'flex';
     modalWrapper.style.justifyContent = 'center';
     modalWrapper.style.alignItems = 'center';
@@ -216,8 +216,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     modal.style.width = '480px';
     modal.style.height = '600px';
     modal.style.backgroundColor = 'white';
-    modal.style.borderRadius = '8px';
-    modal.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+    modal.style.borderRadius = '1.5rem';
 
     modalWrapper.appendChild(modal);
 
@@ -225,6 +224,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.border = '0';
+    iframe.style.borderRadius = '1.5rem';
     modal.appendChild(iframe);
 
     return iframe.contentWindow;
