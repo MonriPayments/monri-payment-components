@@ -58,7 +58,9 @@ export const MastercardClickToPayStore = signalStore(
     maskedCards: [] as MaskedCard[],
     encryptedCard: '',
     cardBrand: '',
-    selectedCardId: '' as string
+    selectedCardId: '' as string,
+    rememberMe: true as boolean,
+    recognitionTokenRequested: true as boolean
   }),
   withRequestStatus(),
   withComputed(store => ({
@@ -286,7 +288,8 @@ export const MastercardClickToPayStore = signalStore(
             windowRef: modal as WindowRef,
             encryptedCard: store.encryptedCard(),
             cardBrand: store.cardBrand(),
-            recognitionTokenRequested: true
+            rememberMe: store.rememberMe(),
+            recognitionTokenRequested: store.recognitionTokenRequested()
           };
 
           // Add consumer data if available

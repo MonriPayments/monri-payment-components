@@ -19,6 +19,7 @@ import { StartPaymentRequest } from './interfaces/alternative-payment-method.int
 import { MastercardClickToPayStore } from './store/mastercard-click-to-pay.store';
 import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
+import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interface';
 
 @Component({
   selector: 'lib-mastercard-click-to-pay',
@@ -34,6 +35,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   private readonly _service = inject(MastercardClickToPayService);
 
   @ViewChild('cardList', { static: false }) cardListRef?: ElementRef;
+  @ViewChild('consent', { static: false }) consentRef?: ElementRef;
 
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
@@ -67,6 +69,8 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
         const cards = this.store.maskedCards();
         if (cards.length > 0) {
           this.loadCardsIntoComponent(cards);
+        } else {
+          this.setupConsentListener();
         }
       });
     });
@@ -115,6 +119,38 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
   private onSignOut(detail: { recognitionToken?: string }): void {
     this.store.signOut(detail?.recognitionToken);
+  }
+
+  private setupConsentListener(): void {
+    if (!this.consentRef) {
+      afterNextRender(
+        () => {
+          this.setupConsentListener();
+        },
+        { injector: this.injector }
+      );
+      return;
+    }
+
+    if (this.consentRef?.nativeElement) {
+      this.consentRef.nativeElement.addEventListener(
+        'checkoutAsGuest',
+        (event: CustomEvent) => {
+          console.log('Checkout as guest event:', event.detail);
+          this.onCheckoutAsGuest(event.detail);
+        }
+      );
+    }
+  }
+
+  private onCheckoutAsGuest(detail: {
+    checkoutAsGuest: boolean;
+    complianceResources: Array<ComplianceSettings>;
+  }): void {
+    console.log('Checkout as guest preferences updated:', detail);
+    patchState(this.store, {
+      recognitionTokenRequested: detail.checkoutAsGuest
+    });
   }
 
   private startPayment() {
