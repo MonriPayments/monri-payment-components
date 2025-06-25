@@ -33,7 +33,9 @@ import {
   ConsumerIdentity,
   WindowRef,
   MastercardCheckoutService,
-  MastercardCheckoutServices
+  MastercardCheckoutServices,
+  CheckoutWithCardRequest,
+  CheckoutWithCardResponse
 } from '../interfaces/mastercard-click-to-pay.interface';
 
 export const MastercardClickToPayStore = signalStore(
@@ -329,6 +331,56 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
+      const checkoutWithCard = async (
+        createModal: () => Window | null,
+        closeModal: () => void
+      ) => {
+        if (!window.mcCheckoutServices) {
+          console.error('Mastercard Click to Pay not initialized');
+          return;
+        }
+
+        try {
+          const modal = createModal();
+
+          const checkoutWithCardData: CheckoutWithCardRequest = {
+            srcDigitalCardId: store.selectedCardId(),
+            windowRef: modal as WindowRef
+          };
+
+          console.log(checkoutWithCardData);
+
+          const checkoutWithCardResponse: CheckoutWithCardResponse =
+            await window.mcCheckoutServices.checkoutWithCard(
+              checkoutWithCardData
+            );
+
+          console.log('checkoutWithCard response:', checkoutWithCardResponse);
+        } catch (error) {
+          console.error('checkoutWithCard failed:', error);
+          closeModal();
+        }
+      };
+
+      const waitForCardSelection = (): Promise<void> => {
+        return new Promise(resolve => {
+          if (store.selectedCardId()) {
+            resolve();
+            return;
+          }
+
+          const checkSelection = () => {
+            if (store.selectedCardId()) {
+              resolve();
+            } else {
+              setTimeout(checkSelection, 100);
+            }
+          };
+
+          checkSelection();
+        });
+      };
+
       const signOut = async (
         recognitionToken?: string
       ): Promise<SignOutResponse | undefined> => {
@@ -371,15 +423,28 @@ export const MastercardClickToPayStore = signalStore(
           await initClickToPay();
           await Promise.all([uiStyle, uiScript]);
 
+          console.log('ROUND1');
           await getCards();
+          console.log('ROUND2');
 
           if (store.maskedCards().length === 0) {
+            console.log('ROUND3');
             await authenticate(createModal, closeModal);
+            console.log('ROUND4');
 
             if (store.maskedCards().length === 0) {
+              console.log('ROUND5');
               await encryptCard();
+              console.log('ROUND6');
               await checkoutWithNewCard(createModal, closeModal);
+              console.log('ROUND7');
             }
+          } else {
+            console.log('ROUND3-2');
+            // Wait for user to select a card
+            await waitForCardSelection();
+            await checkoutWithCard(createModal, closeModal);
+            console.log('ROUND4-2');
           }
         } catch (err) {
           console.error('Error loading Mastercard Click to Pay:', err);
