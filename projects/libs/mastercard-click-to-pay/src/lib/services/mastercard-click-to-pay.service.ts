@@ -6,6 +6,10 @@ import {
 } from '../interfaces/alternative-payment-method.interface';
 import { WebPayService } from './web-pay.service';
 import { Observable, of } from 'rxjs';
+import {
+  DpaData,
+  DpaTransactionOptions
+} from '../interfaces/mastercard-click-to-pay.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -20,18 +24,10 @@ export class MastercardClickToPayService
   ): Observable<StartPaymentResponse> {
     if (params.is_test) {
       return of({
-        acquirer: '',
-        input_timeout: 0,
-        product: '',
-        qr_text: {
-          amount: '',
-          bill_id: 0,
-          cid: '',
-          currency: '',
-          qr_type: '',
-          tid: ''
-        },
-        status: 'test'
+        srcDpaId: '',
+        dpaData: <DpaData>{},
+        dpaTransactionOptions: <DpaTransactionOptions>{},
+        cardBrands: []
       });
     }
 

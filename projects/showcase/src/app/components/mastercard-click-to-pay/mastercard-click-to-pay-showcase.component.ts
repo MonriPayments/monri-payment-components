@@ -43,7 +43,6 @@ export class MastercardClickToPayShowcaseComponent
     mastercardClickToPayElement.inputParams = {
       data: {
         locale: 'en_US',
-        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0',
         darkTheme: false,
         production: environment.production || '',
         consumer: environment.consumer || undefined,

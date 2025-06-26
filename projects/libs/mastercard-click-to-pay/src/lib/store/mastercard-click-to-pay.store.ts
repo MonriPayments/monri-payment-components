@@ -35,7 +35,9 @@ import {
   MastercardCheckoutService,
   MastercardCheckoutServices,
   CheckoutWithCardRequest,
-  CheckoutWithCardResponse
+  CheckoutWithCardResponse,
+  DpaData,
+  DpaTransactionOptions
 } from '../interfaces/mastercard-click-to-pay.interface';
 
 export const MastercardClickToPayStore = signalStore(
@@ -48,13 +50,6 @@ export const MastercardClickToPayStore = signalStore(
     checkoutUrl: '',
     buttonStyle: '',
     environment: '',
-    cardBrands: [
-      'mastercard',
-      'maestro',
-      'visa',
-      'amex',
-      'discover'
-    ] as Array<string>,
     availableCardBrands: [] as Array<string>,
     availableServices: [] as Array<string>,
     maskedCards: [] as MaskedCard[],
@@ -62,12 +57,15 @@ export const MastercardClickToPayStore = signalStore(
     cardBrand: '',
     selectedCardId: '' as string,
     rememberMe: true as boolean,
-    recognitionTokenRequested: true as boolean
+    recognitionTokenRequested: true as boolean,
+    srcDpaId: '' as string,
+    dpaData: {} as DpaData,
+    dpaTransactionOptions: {} as DpaTransactionOptions,
+    cardBrands: [] as Array<string>
   }),
   withRequestStatus(),
   withComputed(store => ({
     locale: computed(() => store.inputParams().data['locale']),
-    srcDpaId: computed(() => store.inputParams().data['srcDpaId']),
     darkTheme: computed(() => store.inputParams().data['darkTheme'] || false),
     email: computed(() => store.inputParams().data['consumer']?.email),
     phone: computed(() => {
@@ -156,8 +154,8 @@ export const MastercardClickToPayStore = signalStore(
           const mcCheckoutService = new MastercardCheckoutServices();
           const initData: MastercardInitRequest = {
             srcDpaId: store.srcDpaId(),
-            dpaData: { dpaName: 'Testdpa0' },
-            dpaTransactionOptions: { dpaLocale: store.locale() },
+            dpaData: store.dpaData(),
+            dpaTransactionOptions: store.dpaTransactionOptions(),
             cardBrands: store.cardBrands()
           };
 

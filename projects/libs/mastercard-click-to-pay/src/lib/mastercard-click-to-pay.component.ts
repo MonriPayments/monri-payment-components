@@ -157,16 +157,28 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     const input = this.store.inputParams();
 
     if (input.is_test) {
+      patchState(this.store, {
+        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0',
+        dpaData: { dpaName: 'Testdpa0' },
+        dpaTransactionOptions: { dpaLocale: 'en_US' },
+        cardBrands: ['mastercard', 'maestro', 'visa', 'amex', 'discover']
+      });
       patchState(this.store, setFulfilled());
       return;
     }
 
-    this._service.startPayment(input).pipe(take(1));
-    /*.subscribe(response => {
-        patchState(this.store, {});
+    this._service
+      .startPayment(input)
+      .pipe(take(1))
+      .subscribe(response => {
+        patchState(this.store, {
+          srcDpaId: response.srcDpaId,
+          dpaData: response.dpaData,
+          dpaTransactionOptions: response.dpaTransactionOptions,
+          cardBrands: response.cardBrands
+        });
         patchState(this.store, setFulfilled());
       });
-      */
   }
 
   private validateInputParams() {
@@ -174,10 +186,6 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
     if (!data['locale']) {
       throw new Error('LOCALE_NOT_SET');
-    }
-
-    if (!data['srcDpaId']) {
-      throw new Error('DPA_ID_NOT_SET');
     }
 
     if (!this.store.inputParams().is_test && !data['environment']) {
