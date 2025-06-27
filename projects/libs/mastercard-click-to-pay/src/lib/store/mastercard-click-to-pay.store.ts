@@ -13,6 +13,11 @@ import { StartPaymentRequest } from '../interfaces/alternative-payment-method.in
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
 import { Prettify } from '@ngrx/signals/src/ts-helpers';
 import {
+  loadMastercardScript,
+  loadMastercardUIStyle,
+  loadMastercardUIScript
+} from '../helpers/script-loader.helpers';
+import {
   MethodsDictionary,
   SignalsDictionary,
   SignalStoreSlices
@@ -47,8 +52,6 @@ export const MastercardClickToPayStore = signalStore(
       data: {}
     } as StartPaymentRequest,
     resolution: window.innerWidth,
-    checkoutUrl: '',
-    buttonStyle: '',
     environment: '',
     availableCardBrands: [] as Array<string>,
     availableServices: [] as Array<string>,
@@ -98,49 +101,6 @@ export const MastercardClickToPayStore = signalStore(
   })),
   withMethods(
     (store, mastercardService = inject(MastercardClickToPayService)) => {
-      const getScriptDomain = () =>
-        store.environment() === 'production'
-          ? 'https://src.mastercard.com'
-          : 'https://sandbox.src.mastercard.com';
-
-      const loadScript = (src: string, type?: string) => {
-        return new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = src;
-          if (type) script.type = type;
-          script.onload = resolve;
-          script.onerror = reject;
-          document.body.appendChild(script);
-        });
-      };
-
-      const loadStylesheet = (href: string) => {
-        return new Promise((resolve, reject) => {
-          const link = document.createElement('link');
-          link.href = href;
-          link.rel = 'stylesheet';
-          link.onload = resolve;
-          link.onerror = reject;
-          document.head.appendChild(link);
-        });
-      };
-
-      const loadMastercardScript = () =>
-        loadScript(
-          `${getScriptDomain()}/srci/integration/2/lib.js?srcDpaId=${store.srcDpaId()}&locale=${store.locale()}`
-        );
-
-      const loadMastercardUIStyle = () =>
-        loadStylesheet(
-          'https://src.mastercard.com/srci/integration/components/src-ui-kit/src-ui-kit.css'
-        );
-
-      const loadMastercardUIScript = () =>
-        loadScript(
-          'https://src.mastercard.com/srci/integration/components/src-ui-kit/src-ui-kit.esm.js',
-          'module'
-        );
-
       const initClickToPay = async () => {
         const MastercardCheckoutServices = window['MastercardCheckoutServices'];
         if (!MastercardCheckoutServices) {
@@ -412,7 +372,11 @@ export const MastercardClickToPayStore = signalStore(
       ) => {
         try {
           const [mastercardScript, uiStyle, uiScript] = [
-            loadMastercardScript(),
+            loadMastercardScript(
+              store.environment(),
+              store.srcDpaId(),
+              store.locale()
+            ),
             loadMastercardUIStyle(),
             loadMastercardUIScript()
           ];
