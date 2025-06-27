@@ -24,7 +24,6 @@ export class MastercardClickToPayService
   ): Observable<StartPaymentResponse> {
     if (params.is_test) {
       return of({
-        srcDpaId: '',
         dpaData: <DpaData>{},
         dpaTransactionOptions: <DpaTransactionOptions>{},
         cardBrands: []

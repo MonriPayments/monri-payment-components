@@ -17,7 +17,6 @@ export type StartPaymentRequest = {
 };
 
 export type StartPaymentResponse = {
-  srcDpaId: string;
   dpaData: DpaData;
   dpaTransactionOptions: DpaTransactionOptions;
   cardBrands: Array<string>;

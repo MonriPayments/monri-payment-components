@@ -46,7 +46,8 @@ export class MastercardClickToPayShowcaseComponent
         darkTheme: false,
         production: environment.production || '',
         consumer: environment.consumer || undefined,
-        encryptCardParams: (environment as any).encryptCardParams || undefined
+        encryptCardParams: (environment as any).encryptCardParams || undefined,
+        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0'
       },
       payment_method: 'mastercard-click-to-pay',
       is_test: true

@@ -58,7 +58,6 @@ export const MastercardClickToPayStore = signalStore(
     selectedCardId: '' as string,
     rememberMe: true as boolean,
     recognitionTokenRequested: true as boolean,
-    srcDpaId: '' as string,
     dpaData: {} as DpaData,
     dpaTransactionOptions: {} as DpaTransactionOptions,
     cardBrands: [] as Array<string>
@@ -68,6 +67,7 @@ export const MastercardClickToPayStore = signalStore(
     locale: computed(() => store.inputParams().data['locale']),
     darkTheme: computed(() => store.inputParams().data['darkTheme'] || false),
     email: computed(() => store.inputParams().data['consumer']?.email),
+    srcDpaId: computed(() => store.inputParams().data['srcDpaId']),
     phone: computed(() => {
       const consumer = store.inputParams().data['consumer'];
       if (consumer?.mobileNumber) {
