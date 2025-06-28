@@ -17,6 +17,7 @@ import { MastercardClickToPayService } from './services/mastercard-click-to-pay.
 import { take } from 'rxjs';
 import { StartPaymentRequest } from './interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayStore } from './store/mastercard-click-to-pay.store';
+import { CardDataStore } from './store/card-data.store';
 import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
 import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interface';
@@ -26,12 +27,13 @@ import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interfa
   standalone: true,
   templateUrl: 'mastercard-click-to-pay.component.html',
   styleUrl: 'mastercard-click-to-pay.component.scss',
-  providers: [MastercardClickToPayService, MastercardClickToPayStore],
+  providers: [MastercardClickToPayService, MastercardClickToPayStore, CardDataStore],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   private readonly injector = inject(Injector);
   readonly store = inject(MastercardClickToPayStore);
+  readonly cardStore = inject(CardDataStore);
   private readonly _service = inject(MastercardClickToPayService);
 
   @ViewChild('cardList', { static: false }) cardListRef?: ElementRef;
@@ -39,6 +41,13 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
+    
+    // Initialize card data if provided
+    const encryptCardParams = value.data['encryptCardParams'];
+    if (encryptCardParams) {
+      this.cardStore.setCardData(encryptCardParams);
+    }
+    
     console.log(
       'Mastercard Click To Pay inputParams:',
       this.store.inputParams()
@@ -60,6 +69,8 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.setupWindowMessageHandlers();
+    
     runInInjectionContext(this.injector, () => {
       effect(() => {
         const cards = this.store.maskedCards();
@@ -249,5 +260,84 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
       windowWithModal.currentModal.remove();
       windowWithModal.currentModal = undefined;
     }
+  }
+
+  private setupWindowMessageHandlers(): void {
+    window.addEventListener('message', (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      switch (event.data.type) {
+        case 'SET_CARD_DATA':
+          if (event.data.cardData) {
+            this.cardStore.setCardData(event.data.cardData);
+            console.log('Card data received via window message:', event.data.cardData);
+          }
+          break;
+        
+        case 'CLEAR_CARD_DATA':
+          this.cardStore.clearCardData();
+          console.log('Card data cleared via window message');
+          break;
+        
+        case 'TRIGGER_ENCRYPT_CARD':
+          if (this.cardStore.canEncrypt()) {
+            this.store.encryptCard();
+          } else {
+            console.warn('Cannot encrypt card - card data not ready');
+          }
+          break;
+        
+        case 'TRIGGER_CHECKOUT_NEW_CARD':
+          if (this.cardStore.canCheckout()) {
+            this.store.checkoutWithNewCard(
+              () => this.createModal(),
+              () => this.closeModal()
+            );
+          } else {
+            console.warn('Cannot checkout with new card - card not encrypted');
+          }
+          break;
+        
+        case 'TRIGGER_CHECKOUT_WITH_CARD':
+          this.store.triggerCheckoutWithCard(
+            () => this.createModal(),
+            () => this.closeModal()
+          );
+          break;
+      }
+    });
+
+    // Expose public methods to window for external access
+    (window as any).mastercardClickToPayComponent = {
+      setCardData: (cardData: any) => this.cardStore.setCardData(cardData),
+      clearCardData: () => this.cardStore.clearCardData(),
+      encryptCard: () => {
+        if (this.cardStore.canEncrypt()) {
+          return this.store.encryptCard();
+        }
+        console.warn('Cannot encrypt card - card data not ready');
+        return Promise.resolve();
+      },
+      checkoutWithNewCard: () => {
+        if (this.cardStore.canCheckout()) {
+          return this.store.checkoutWithNewCard(
+            () => this.createModal(),
+            () => this.closeModal()
+          );
+        }
+        console.warn('Cannot checkout with new card - card not encrypted');
+        return Promise.resolve();
+      },
+      checkoutWithCard: () => {
+        return this.store.triggerCheckoutWithCard(
+          () => this.createModal(),
+          () => this.closeModal()
+        );
+      },
+      getCardStore: () => this.cardStore,
+      getStore: () => this.store
+    };
   }
 }

@@ -11,6 +11,7 @@ import { computed, inject } from '@angular/core';
 import { withRequestStatus, setPending } from './request-status.feature';
 import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
+import { CardDataStore } from './card-data.store';
 import { Prettify } from '@ngrx/signals/src/ts-helpers';
 import {
   loadMastercardScript,
@@ -56,8 +57,6 @@ export const MastercardClickToPayStore = signalStore(
     availableCardBrands: [] as Array<string>,
     availableServices: [] as Array<string>,
     maskedCards: [] as MaskedCard[],
-    encryptedCard: '',
-    cardBrand: '',
     selectedCardId: '' as string,
     rememberMe: true as boolean,
     recognitionTokenRequested: true as boolean,
@@ -78,9 +77,6 @@ export const MastercardClickToPayStore = signalStore(
       }
       return undefined;
     }),
-    encryptCardParams: computed(
-      () => store.inputParams().data['encryptCardParams'] || undefined
-    ),
     orderedAvailableCardBrands: computed(() => {
       const available = store.availableCardBrands();
       const predefinedOrder = store.cardBrands();
@@ -100,7 +96,11 @@ export const MastercardClickToPayStore = signalStore(
     })
   })),
   withMethods(
-    (store, mastercardService = inject(MastercardClickToPayService)) => {
+    (
+      store,
+      mastercardService = inject(MastercardClickToPayService),
+      cardStore = inject(CardDataStore)
+    ) => {
       const initClickToPay = async () => {
         const MastercardCheckoutServices = window['MastercardCheckoutServices'];
         if (!MastercardCheckoutServices) {
@@ -215,15 +215,20 @@ export const MastercardClickToPayStore = signalStore(
           return;
         }
 
+        if (!cardStore.canEncrypt()) {
+          console.error('Card data not ready for encryption');
+          return;
+        }
+
         try {
           const encryptCardResponse: EncryptCardResponse =
             await window.mcCheckoutServices.encryptCard(
-              store.encryptCardParams() as EncryptCardRequest
+              cardStore.cardData() as EncryptCardRequest
             );
-          patchState(store, {
-            encryptedCard: encryptCardResponse.encryptedCard,
-            cardBrand: encryptCardResponse.cardBrand
-          });
+          cardStore.setEncryptedCard(
+            encryptCardResponse.encryptedCard,
+            encryptCardResponse.cardBrand
+          );
           console.log('encryptCard response:', encryptCardResponse);
         } catch (error) {
           console.error('encryptCard failed:', error);
@@ -244,10 +249,16 @@ export const MastercardClickToPayStore = signalStore(
 
           const modal = createModal();
 
+          if (!cardStore.canCheckout()) {
+            console.error('Card not ready for checkout');
+            closeModal();
+            return;
+          }
+
           const checkoutWithNewCardData: CheckoutWithNewCardRequest = {
             windowRef: modal as WindowRef,
-            encryptedCard: store.encryptedCard(),
-            cardBrand: store.cardBrand(),
+            encryptedCard: cardStore.encryptedCard(),
+            cardBrand: cardStore.cardBrand(),
             rememberMe: store.rememberMe(),
             recognitionTokenRequested: store.recognitionTokenRequested()
           };
@@ -320,25 +331,6 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
-      const waitForCardSelection = (): Promise<void> => {
-        return new Promise(resolve => {
-          if (store.selectedCardId()) {
-            resolve();
-            return;
-          }
-
-          const checkSelection = () => {
-            if (store.selectedCardId()) {
-              resolve();
-            } else {
-              setTimeout(checkSelection, 100);
-            }
-          };
-
-          checkSelection();
-        });
-      };
-
       const signOut = async (
         recognitionToken?: string
       ): Promise<SignOutResponse | undefined> => {
@@ -396,17 +388,18 @@ export const MastercardClickToPayStore = signalStore(
 
             if (store.maskedCards().length === 0) {
               console.log('ROUND5');
-              await encryptCard();
-              console.log('ROUND6');
-              await checkoutWithNewCard(createModal, closeModal);
-              console.log('ROUND7');
+              // Card data will be handled externally through CardDataStore
+              // The flow will continue when card data is provided and actions are triggered
+              console.log(
+                'No cards found. Waiting for external card data input...'
+              );
             }
           } else {
             console.log('ROUND3-2');
-            // Wait for user to select a card
-            await waitForCardSelection();
-            await checkoutWithCard(createModal, closeModal);
-            console.log('ROUND4-2');
+            // Cards are available, waiting for user to select one and trigger payment
+            console.log(
+              'Cards found. Waiting for card selection and payment trigger...'
+            );
           }
         } catch (err) {
           console.error('Error loading Mastercard Click to Pay:', err);
@@ -418,6 +411,18 @@ export const MastercardClickToPayStore = signalStore(
         window.mastercardClickToPayService = mastercardService;
       };
 
+      const triggerCheckoutWithCard = async (
+        createModal: () => Window | null,
+        closeModal: () => void
+      ) => {
+        if (!store.selectedCardId()) {
+          console.error('No card selected for checkout');
+          return;
+        }
+
+        await checkoutWithCard(createModal, closeModal);
+      };
+
       return {
         onLoad,
         setWindowServices,
@@ -425,14 +430,16 @@ export const MastercardClickToPayStore = signalStore(
         authenticate,
         encryptCard,
         checkoutWithNewCard,
-        signOut
+        signOut,
+        triggerCheckoutWithCard,
+        getCardStore: () => cardStore
       };
     }
   ),
   withHooks({
     onInit(store) {
       patchState(store, setPending());
-      store.setWindowServices();
+      store['setWindowServices']();
     }
   })
 );
