@@ -43,10 +43,6 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
       'Mastercard Click To Pay inputParams:',
       this.store.inputParams()
     );
-    this.store.onLoad(
-      () => this.createModal(),
-      () => this.closeModal()
-    );
   }
 
   get mastercardClickToPayService(): MastercardClickToPayService {
@@ -71,6 +67,15 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
           this.loadCardsIntoComponent(cards);
         } else {
           this.setupConsentListener();
+        }
+      });
+
+      effect(() => {
+        if (this.store.isFulfilled()) {
+          this.store.onLoad(
+            () => this.createModal(),
+            () => this.closeModal()
+          );
         }
       });
     });
@@ -158,6 +163,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
     if (input.is_test) {
       patchState(this.store, {
+        srcDpaId: '0650bdfd-ec8b-4d67-b976-ea7d19637c00_dpa0',
         dpaData: { dpaName: 'Testdpa0' },
         dpaTransactionOptions: { dpaLocale: 'en_US' },
         cardBrands: ['mastercard', 'maestro', 'visa', 'amex', 'discover']
@@ -171,6 +177,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
       .pipe(take(1))
       .subscribe(response => {
         patchState(this.store, {
+          srcDpaId: response.srcDpaId,
           dpaData: response.dpaData,
           dpaTransactionOptions: response.dpaTransactionOptions,
           cardBrands: response.cardBrands
