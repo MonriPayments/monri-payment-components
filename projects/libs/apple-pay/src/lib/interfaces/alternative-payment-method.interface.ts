@@ -3,7 +3,7 @@ export interface AlternativePaymentMethodInterface {
 
   validateMerchant(params: MerchantValidateRequest): any;
 
-  newTransaction(params: NewCardTransactionRequest): any;
+  newTransaction(params: NewCardTransactionRequest, env: string | undefined): any;
 }
 
 export type StartPaymentRequest = {
@@ -27,7 +27,7 @@ export type StartPaymentResponse = {
 export type MerchantValidateRequest = {
   data: { [k: string]: string };
   validation_url: string;
-  initiative_context: any;
+  origin: string
 };
 
 export type NewCardTransactionRequest = {

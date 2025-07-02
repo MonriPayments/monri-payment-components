@@ -34,13 +34,14 @@ export class ApplePayService implements AlternativePaymentMethodInterface {
     return this.webPayService.validateMerchant({
       data: params.data,
       validation_url: params.validation_url,
-      initiative_context: window.location.hostname
+      origin: params.origin
     });
   }
 
   public newTransaction(
-    params: NewCardTransactionRequest
+    params: NewCardTransactionRequest,
+    env: string | undefined
   ): Observable<any> {
-    return this.webPayService.newTransaction(params);
+    return this.webPayService.newTransaction(params, env);
   }
 }
