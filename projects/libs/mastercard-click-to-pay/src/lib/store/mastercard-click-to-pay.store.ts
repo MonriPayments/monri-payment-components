@@ -69,13 +69,18 @@ export const MastercardClickToPayStore = signalStore(
   withComputed(store => ({
     locale: computed(() => store.inputParams().data['locale']),
     darkTheme: computed(() => store.inputParams().data['darkTheme'] || false),
-    email: computed(() => store.inputParams().data['consumer']?.email),
-    phone: computed(() => {
-      const consumer = store.inputParams().data['consumer'];
-      if (consumer?.mobileNumber) {
-        return `+${consumer.mobileNumber.countryCode}${consumer.mobileNumber.phoneNumber}`;
-      }
-      return undefined;
+    email: computed(() => store.inputParams().data['ch_email']),
+    phone: computed(() => store.inputParams().data['ch_phone']),
+    consumer: computed(() => {
+      const data = store.inputParams().data;
+      const consumer: Partial<Consumer> = {};
+
+      if (data['ch_email']) consumer.emailAddress = data['ch_email'];
+      if (data['mobileNumber']) consumer.mobileNumber = data['mobileNumber'];
+      if (data['firstName']) consumer.firstName = data['firstName'];
+      if (data['lastName']) consumer.lastName = data['lastName'];
+
+      return Object.keys(consumer).length > 0 ? consumer : null;
     }),
     orderedAvailableCardBrands: computed(() => {
       const available = store.availableCardBrands();
@@ -245,7 +250,7 @@ export const MastercardClickToPayStore = signalStore(
         }
 
         try {
-          const consumer = store.inputParams().data['consumer'];
+          const consumer = store.consumer();
 
           const modal = createModal();
 
@@ -265,12 +270,7 @@ export const MastercardClickToPayStore = signalStore(
 
           // Add consumer data if available
           if (consumer) {
-            checkoutWithNewCardData.consumer = {
-              emailAddress: consumer.email,
-              mobileNumber: consumer.mobileNumber,
-              firstName: consumer.firstName,
-              lastName: consumer.lastName
-            } as Consumer;
+            checkoutWithNewCardData.consumer = consumer as Consumer;
           }
 
           console.log(checkoutWithNewCardData);

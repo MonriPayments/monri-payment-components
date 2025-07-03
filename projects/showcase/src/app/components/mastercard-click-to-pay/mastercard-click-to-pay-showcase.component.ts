@@ -29,7 +29,7 @@ interface MastercardClickToPayElement extends HTMLElement {
           <input
             type="text"
             id="cardNumber"
-            value="5186001700009726"
+            value="5120350100064537"
             style="width: 100%; margin-top: 0.5rem;"
           />
         </div>
@@ -60,40 +60,47 @@ interface MastercardClickToPayElement extends HTMLElement {
         </div>
 
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-          <button (click)="setCardDataViaMessage()" style="padding: 0.5rem;">
-            Send via Window Message
+          <button
+            (click)="setCardData()"
+            style="padding: 0.5rem; background: #007bff; color: white;"
+          >
+            Set Card Data
           </button>
-          <button (click)="setCardDataViaAPI()" style="padding: 0.5rem;">
-            Send via Direct Method
-          </button>
-          <button (click)="clearCardData()" style="padding: 0.5rem;">
+          <button
+            (click)="clearCardData()"
+            style="padding: 0.5rem; background: #6c757d; color: white;"
+          >
             Clear Card Data
           </button>
         </div>
 
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-          <button (click)="triggerEncrypt()" style="padding: 0.5rem;">
-            Trigger Encrypt
+          <button
+            (click)="encryptCard()"
+            style="padding: 0.5rem; background: #28a745; color: white;"
+          >
+            Encrypt Card
           </button>
-          <button (click)="triggerCheckout()" style="padding: 0.5rem;">
+          <button
+            (click)="checkoutWithNewCard()"
+            style="padding: 0.5rem; background: #dc3545; color: white;"
+          >
             Checkout with New Card
           </button>
         </div>
 
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ccc;">
-          <h4>Existing Card Flow:</h4>
-          <button (click)="triggerCheckoutWithCard()" style="padding: 0.5rem; background: #007bff; color: white;">
-            Pay with Selected Card
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <button
+            (click)="checkoutWithCard()"
+            style="padding: 0.5rem; background: #17a2b8; color: white;"
+          >
+            Checkout with Selected Card
           </button>
-          <p style="font-size: 0.9em; color: #666; margin-top: 0.5rem;">
-            First select a card from the component above, then click this button to proceed with payment.
-          </p>
-        </div>
-
-        <div style="margin-top: 1rem;">
-          <h4>Component State:</h4>
-          <button (click)="logComponentState()" style="padding: 0.5rem;">
-            Log Component State
+          <button
+            (click)="getComponentState()"
+            style="padding: 0.5rem; background: #6f42c1; color: white;"
+          >
+            Get Component State
           </button>
         </div>
       </div>
@@ -105,8 +112,16 @@ export class MastercardClickToPayShowcaseComponent
 {
   readonly #injector = inject(Injector);
   private mastercardClickToPayElement: HTMLElement | null = null;
+  private componentReady = false;
 
   ngOnInit() {
+    window.addEventListener('message', event => {
+      if (event.data.type === 'MASTERCARD_COMPONENT_READY') {
+        this.componentReady = true;
+        console.log('Component is ready');
+      }
+    });
+
     const customElementConstructor = createCustomElement(
       MastercardClickToPayComponent,
       {
@@ -127,8 +142,7 @@ export class MastercardClickToPayShowcaseComponent
       data: {
         locale: 'en_US',
         darkTheme: false,
-        production: environment.production || '',
-        consumer: environment.consumer || undefined
+        ...environment
         // NOTE: No encryptCardParams
       },
       payment_method: 'mastercard-click-to-pay',
@@ -169,104 +183,113 @@ export class MastercardClickToPayShowcaseComponent
     };
   }
 
-  setCardDataViaMessage() {
-    const cardData = this.getCardDataFromForm();
-
-    window.postMessage(
-      {
-        type: 'SET_CARD_DATA',
+  async setCardData() {
+    try {
+      console.log('Setting card data...');
+      const cardData = this.getCardDataFromForm();
+      const result = await this.sendMessageWithPromise('SET_CARD_DATA', {
         cardData
-      },
-      '*'
-    );
-
-    console.log('Card data sent via window message:', cardData);
-  }
-
-  setCardDataViaAPI() {
-    const cardData = this.getCardDataFromForm();
-
-    const component = (window as any).mastercardClickToPayComponent;
-    if (component) {
-      component.setCardData(cardData);
-      console.log('Card data set via API:', cardData);
-    } else {
-      console.error('Component API not available');
-    }
-  }
-
-  clearCardData() {
-    window.postMessage(
-      {
-        type: 'CLEAR_CARD_DATA'
-      },
-      '*'
-    );
-
-    const component = (window as any).mastercardClickToPayComponent;
-    if (component) {
-      component.clearCardData();
-    }
-
-    console.log('Card data cleared');
-  }
-
-  triggerEncrypt() {
-    window.postMessage(
-      {
-        type: 'TRIGGER_ENCRYPT_CARD'
-      },
-      '*'
-    );
-
-    console.log('Encrypt triggered via message');
-  }
-
-  triggerCheckout() {
-    window.postMessage(
-      {
-        type: 'TRIGGER_CHECKOUT_NEW_CARD'
-      },
-      '*'
-    );
-
-    console.log('Checkout with new card triggered via message');
-  }
-
-  triggerCheckoutWithCard() {
-    window.postMessage(
-      {
-        type: 'TRIGGER_CHECKOUT_WITH_CARD'
-      },
-      '*'
-    );
-
-    console.log('Checkout with selected card triggered via message');
-  }
-
-  logComponentState() {
-    const component = (window as any).mastercardClickToPayComponent;
-    if (component) {
-      const cardStore = component.getCardStore();
-      const mainStore = component.getStore();
-
-      console.group('Component State');
-      console.log('Card Store:', {
-        isCardDataReady: cardStore.isCardDataReady(),
-        hasCardData: cardStore.hasCardData(),
-        canEncrypt: cardStore.canEncrypt(),
-        canCheckout: cardStore.canCheckout(),
-        isCardEncrypted: cardStore.isCardEncrypted(),
-        encryptedCard: cardStore.encryptedCard(),
-        cardBrand: cardStore.cardBrand()
       });
-      console.log('Main Store:', {
-        maskedCards: mainStore.maskedCards(),
-        isFulfilled: mainStore.isFulfilled()
-      });
-      console.groupEnd();
-    } else {
-      console.error('Component API not available');
+      console.log('Card data set successfully:', result);
+    } catch (error) {
+      console.error('Error setting card data:', error);
     }
+  }
+
+  async clearCardData() {
+    try {
+      console.log('Clearing card data...');
+      const result = await this.sendMessageWithPromise('CLEAR_CARD_DATA');
+      console.log('Card data cleared successfully:', result);
+    } catch (error) {
+      console.error('Error clearing card data:', error);
+    }
+  }
+
+  async encryptCard() {
+    try {
+      console.log('Encrypting card...');
+      const result = await this.sendMessageWithPromise('TRIGGER_ENCRYPT_CARD');
+      console.log('Card encrypted successfully:', result);
+    } catch (error) {
+      console.error('Error encrypting card:', error);
+    }
+  }
+
+  async checkoutWithNewCard() {
+    try {
+      console.log('Starting checkout with new card...');
+      const result = await this.sendMessageWithPromise(
+        'TRIGGER_CHECKOUT_NEW_CARD'
+      );
+      console.log('Checkout started successfully:', result);
+    } catch (error) {
+      console.error('Error starting checkout:', error);
+    }
+  }
+
+  async checkoutWithCard() {
+    try {
+      console.log('Starting checkout with selected card...');
+      const result = await this.sendMessageWithPromise(
+        'TRIGGER_CHECKOUT_WITH_CARD'
+      );
+      console.log('Checkout with card started successfully:', result);
+    } catch (error) {
+      console.error('Error starting checkout with card:', error);
+    }
+  }
+
+  async getComponentState() {
+    try {
+      console.log('Getting component state...');
+      const result = await this.sendMessageWithPromise('GET_COMPONENT_STATE');
+      console.log('Component state:', result);
+    } catch (error) {
+      console.error('Error getting component state:', error);
+    }
+  }
+
+  private sendMessageWithPromise(type: string, data?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (!this.componentReady) {
+        reject(new Error('Component not ready yet'));
+        return;
+      }
+
+      const requestId = `${type}_${Date.now()}_${Math.random()}`;
+
+      const timeout = setTimeout(() => {
+        window.removeEventListener('message', responseHandler);
+        reject(new Error(`Timeout waiting for response to ${type}`));
+      }, 5000);
+
+      const responseHandler = (event: MessageEvent) => {
+        if (
+          event.data.type === 'MASTERCARD_RESPONSE' &&
+          event.data.requestId === requestId
+        ) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', responseHandler);
+
+          if (event.data.success) {
+            resolve(event.data.data);
+          } else {
+            reject(new Error(event.data.error || 'Unknown error'));
+          }
+        }
+      };
+
+      window.addEventListener('message', responseHandler);
+
+      window.postMessage(
+        {
+          type,
+          requestId,
+          ...data
+        },
+        '*'
+      );
+    });
   }
 }

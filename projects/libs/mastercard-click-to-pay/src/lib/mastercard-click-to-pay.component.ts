@@ -27,7 +27,11 @@ import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interfa
   standalone: true,
   templateUrl: 'mastercard-click-to-pay.component.html',
   styleUrl: 'mastercard-click-to-pay.component.scss',
-  providers: [MastercardClickToPayService, MastercardClickToPayStore, CardDataStore],
+  providers: [
+    MastercardClickToPayService,
+    MastercardClickToPayStore,
+    CardDataStore
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
@@ -41,13 +45,12 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
-    
-    // Initialize card data if provided
+
     const encryptCardParams = value.data['encryptCardParams'];
     if (encryptCardParams) {
       this.cardStore.setCardData(encryptCardParams);
     }
-    
+
     console.log(
       'Mastercard Click To Pay inputParams:',
       this.store.inputParams()
@@ -70,7 +73,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.setupWindowMessageHandlers();
-    
+
     runInInjectionContext(this.injector, () => {
       effect(() => {
         const cards = this.store.maskedCards();
@@ -88,6 +91,11 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
             () => this.closeModal()
           );
         }
+      });
+
+      effect(() => {
+        const maskedCardsCount = this.store.maskedCards().length;
+        this.emitMaskedCardsChanged(maskedCardsCount);
       });
     });
   }
@@ -262,82 +270,175 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     }
   }
 
+  private emitMaskedCardsChanged(maskedCardsCount: number): void {
+    window.postMessage(
+      {
+        type: 'MASTERCARD_MASKED_CARDS_CHANGED',
+        componentId: 'mastercard-click-to-pay',
+        maskedCardsCount
+      },
+      '*'
+    );
+  }
+
   private setupWindowMessageHandlers(): void {
     window.addEventListener('message', (event: MessageEvent) => {
       if (event.origin !== window.location.origin) {
         return;
       }
 
+      const respond = (success: boolean, data?: unknown, error?: string) => {
+        if (event.data.requestId) {
+          window.postMessage(
+            {
+              type: 'MASTERCARD_RESPONSE',
+              requestId: event.data.requestId,
+              success,
+              data,
+              error
+            },
+            event.origin
+          );
+        }
+      };
+
       switch (event.data.type) {
         case 'SET_CARD_DATA':
           if (event.data.cardData) {
             this.cardStore.setCardData(event.data.cardData);
-            console.log('Card data received via window message:', event.data.cardData);
+            console.log(
+              'Card data received via window message:',
+              event.data.cardData
+            );
+            respond(true, { cardDataSet: true });
+          } else {
+            respond(false, null, 'No card data provided');
           }
           break;
-        
+
         case 'CLEAR_CARD_DATA':
           this.cardStore.clearCardData();
           console.log('Card data cleared via window message');
+          respond(true, { cardDataCleared: true });
           break;
-        
+
         case 'TRIGGER_ENCRYPT_CARD':
           if (this.cardStore.canEncrypt()) {
             this.store.encryptCard();
+            respond(true, { encryptionTriggered: true });
           } else {
             console.warn('Cannot encrypt card - card data not ready');
+            respond(false, null, 'Cannot encrypt card - card data not ready');
           }
           break;
-        
+
         case 'TRIGGER_CHECKOUT_NEW_CARD':
           if (this.cardStore.canCheckout()) {
             this.store.checkoutWithNewCard(
               () => this.createModal(),
               () => this.closeModal()
             );
+            respond(true, { checkoutTriggered: true });
           } else {
             console.warn('Cannot checkout with new card - card not encrypted');
+            respond(
+              false,
+              null,
+              'Cannot checkout with new card - card not encrypted'
+            );
           }
           break;
-        
+
         case 'TRIGGER_CHECKOUT_WITH_CARD':
           this.store.triggerCheckoutWithCard(
             () => this.createModal(),
             () => this.closeModal()
           );
+          respond(true, { checkoutWithCardTriggered: true });
+          break;
+
+        case 'GET_COMPONENT_STATE':
+          respond(true, {
+            cardStore: {
+              isCardDataReady: this.cardStore.isCardDataReady(),
+              hasCardData: this.cardStore.hasCardData(),
+              canEncrypt: this.cardStore.canEncrypt(),
+              canCheckout: this.cardStore.canCheckout(),
+              isCardEncrypted: this.cardStore.isCardEncrypted()
+            },
+            mainStore: {
+              isFulfilled: this.store.isFulfilled(),
+              maskedCardsCount: this.store.maskedCards().length
+            }
+          });
           break;
       }
     });
 
-    // Expose public methods to window for external access
-    (window as any).mastercardClickToPayComponent = {
-      setCardData: (cardData: any) => this.cardStore.setCardData(cardData),
-      clearCardData: () => this.cardStore.clearCardData(),
-      encryptCard: () => {
-        if (this.cardStore.canEncrypt()) {
-          return this.store.encryptCard();
-        }
-        console.warn('Cannot encrypt card - card data not ready');
-        return Promise.resolve();
+    window.postMessage(
+      {
+        type: 'MASTERCARD_COMPONENT_READY',
+        componentId: 'mastercard-click-to-pay'
       },
-      checkoutWithNewCard: () => {
-        if (this.cardStore.canCheckout()) {
-          return this.store.checkoutWithNewCard(
-            () => this.createModal(),
-            () => this.closeModal()
-          );
-        }
-        console.warn('Cannot checkout with new card - card not encrypted');
-        return Promise.resolve();
-      },
-      checkoutWithCard: () => {
-        return this.store.triggerCheckoutWithCard(
-          () => this.createModal(),
-          () => this.closeModal()
-        );
-      },
+      '*'
+    );
+
+    (
+      window as unknown as { mastercardClickToPayComponent: unknown }
+    ).mastercardClickToPayComponent = {
+      setCardData: (cardData: unknown) =>
+        this.sendMessageWithPromise('SET_CARD_DATA', { cardData }),
+      clearCardData: () => this.sendMessageWithPromise('CLEAR_CARD_DATA'),
+      encryptCard: () => this.sendMessageWithPromise('TRIGGER_ENCRYPT_CARD'),
+      checkoutWithNewCard: () =>
+        this.sendMessageWithPromise('TRIGGER_CHECKOUT_NEW_CARD'),
+      checkoutWithCard: () =>
+        this.sendMessageWithPromise('TRIGGER_CHECKOUT_WITH_CARD'),
+      getComponentState: () =>
+        this.sendMessageWithPromise('GET_COMPONENT_STATE'),
       getCardStore: () => this.cardStore,
       getStore: () => this.store
     };
+  }
+
+  private sendMessageWithPromise(
+    type: string,
+    data?: unknown
+  ): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const requestId = `${type}_${Date.now()}_${Math.random()}`;
+
+      const timeout = setTimeout(() => {
+        window.removeEventListener('message', responseHandler);
+        reject(new Error(`Timeout waiting for response to ${type}`));
+      }, 5000);
+
+      const responseHandler = (event: MessageEvent) => {
+        if (
+          event.data.type === 'MASTERCARD_RESPONSE' &&
+          event.data.requestId === requestId
+        ) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', responseHandler);
+
+          if (event.data.success) {
+            resolve(event.data.data);
+          } else {
+            reject(new Error(event.data.error || 'Unknown error'));
+          }
+        }
+      };
+
+      window.addEventListener('message', responseHandler);
+
+      window.postMessage(
+        {
+          type,
+          requestId,
+          ...(data || {})
+        },
+        '*'
+      );
+    });
   }
 }

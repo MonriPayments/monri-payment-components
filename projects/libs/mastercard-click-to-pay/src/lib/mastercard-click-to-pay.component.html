@@ -1,24 +1,27 @@
-<div class="container">
+<div>
   <div id="container-mastercard">
     @if (store.maskedCards().length > 0) {
-      <src-card-list 
-        [attr.locale]="store.locale()"
-        [attr.card-brands]="store.orderedAvailableCardBrandsWithMapping().join(',')"
-        [attr.card-selection-type]="'radioButton'"
-        [attr.dark]="store.darkTheme() ? '' : null"
-        [attr.display-sign-out]="'true'"
-        [attr.display-preferred-card]="'true'"
-        #cardList>
-      </src-card-list>
+    <src-card-list
+      [attr.locale]="store.locale()"
+      [attr.card-brands]="
+        store.orderedAvailableCardBrandsWithMapping().join(',')
+      "
+      [attr.card-selection-type]="'radioButton'"
+      [attr.dark]="store.darkTheme() ? '' : null"
+      [attr.display-sign-out]="'true'"
+      [attr.display-preferred-card]="'true'"
+      #cardList
+    >
+    </src-card-list>
     } @else {
-      <src-consent 
-        [attr.locale]="store.locale()"
-        [attr.dcf-suppressed]="'true'"
-        [attr.display-remember-me]="'false'"
-        [attr.dark]="store.darkTheme() ? '' : null"
-        #consent>
-      </src-consent>
+    <src-consent
+      [attr.locale]="store.locale()"
+      [attr.dcf-suppressed]="'true'"
+      [attr.display-remember-me]="'false'"
+      [attr.dark]="store.darkTheme() ? '' : null"
+      #consent
+    >
+    </src-consent>
     }
   </div>
 </div>
-
