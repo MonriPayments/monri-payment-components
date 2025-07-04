@@ -4,6 +4,7 @@ import {
   inject,
   Input,
   OnInit,
+  OnDestroy,
   CUSTOM_ELEMENTS_SCHEMA,
   ViewChild,
   ElementRef,
@@ -14,6 +15,8 @@ import {
   afterNextRender
 } from '@angular/core';
 import { MastercardClickToPayService } from './services/mastercard-click-to-pay.service';
+import { MastercardEventsService } from './services/mastercard-events.service';
+import { MastercardMessageHandlerService } from './services/mastercard-message-handler.service';
 import { take } from 'rxjs';
 import { StartPaymentRequest } from './interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayStore } from './store/mastercard-click-to-pay.store';
@@ -21,6 +24,7 @@ import { CardDataStore } from './store/card-data.store';
 import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
 import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interface';
+import { ERROR_MESSAGES } from './constants/error-messages';
 
 @Component({
   selector: 'lib-mastercard-click-to-pay',
@@ -34,11 +38,16 @@ import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interfa
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
+export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly injector = inject(Injector);
   readonly store = inject(MastercardClickToPayStore);
   readonly cardStore = inject(CardDataStore);
   private readonly _service = inject(MastercardClickToPayService);
+  private readonly eventsService = inject(MastercardEventsService);
+  private readonly messageHandler = inject(MastercardMessageHandlerService);
+  
+  // Cleanup tracking
+  private cleanupTasks: (() => void)[] = [];
 
   @ViewChild('cardList', { static: false }) cardListRef?: ElementRef;
   @ViewChild('consent', { static: false }) consentRef?: ElementRef;
@@ -46,9 +55,20 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
 
-    const encryptCardParams = value.data['encryptCardParams'];
-    if (encryptCardParams) {
-      this.cardStore.setCardData(encryptCardParams);
+    // Initialize card data if provided
+    const encryptCardParams = value.data.encryptCardParams;
+    if (encryptCardParams && typeof encryptCardParams === 'object' && 
+        'primaryAccountNumber' in encryptCardParams && 
+        'panExpirationMonth' in encryptCardParams &&
+        'panExpirationYear' in encryptCardParams &&
+        'cardSecurityCode' in encryptCardParams) {
+      // Type assertion after validation
+      this.cardStore.setCardData(encryptCardParams as {
+        primaryAccountNumber: string;
+        panExpirationMonth: string;
+        panExpirationYear: string;
+        cardSecurityCode: string;
+      });
     }
 
     console.log(
@@ -93,9 +113,14 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
         }
       });
 
+      // Emit masked cards count changes (with optimization)
+      let previousCount = 0;
       effect(() => {
         const maskedCardsCount = this.store.maskedCards().length;
-        this.emitMaskedCardsChanged(maskedCardsCount);
+        if (maskedCardsCount !== previousCount) {
+          this.eventsService.emitMaskedCardsChanged(maskedCardsCount);
+          previousCount = maskedCardsCount;
+        }
       });
     });
   }
@@ -206,18 +231,39 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   }
 
   private validateInputParams() {
-    const data = this.store.inputParams().data;
+    const inputParams = this.store.inputParams();
+    const data = inputParams.data;
 
-    if (!data['locale']) {
-      throw new Error('LOCALE_NOT_SET');
+    // Validate required fields
+    if (!inputParams.payment_method) {
+      throw new Error(`PAYMENT_METHOD_NOT_SET: ${ERROR_MESSAGES.PAYMENT_METHOD_NOT_SET}`);
     }
 
-    if (!this.store.inputParams().is_test && !data['environment']) {
-      throw new Error('ENV_NOT_SET');
+    if (inputParams.payment_method !== 'mastercard-click-to-pay') {
+      throw new Error(`INVALID_PAYMENT_METHOD: ${ERROR_MESSAGES.INVALID_PAYMENT_METHOD}, got '${inputParams.payment_method}'`);
     }
 
-    if (data['environment']) {
-      patchState(this.store, { environment: data['environment'] });
+    if (!data || typeof data !== 'object') {
+      throw new Error(`INVALID_DATA: ${ERROR_MESSAGES.INVALID_DATA}`);
+    }
+
+    if (!data.locale || typeof data.locale !== 'string') {
+      throw new Error(`LOCALE_NOT_SET: ${ERROR_MESSAGES.LOCALE_NOT_SET}`);
+    }
+
+    if (!inputParams.is_test) {
+      if (!data.environment) {
+        throw new Error(`ENV_NOT_SET: ${ERROR_MESSAGES.ENV_NOT_SET}`);
+      }
+      
+      if (data.environment !== 'production' && data.environment !== 'sandbox') {
+        throw new Error(`INVALID_ENVIRONMENT: ${ERROR_MESSAGES.INVALID_ENVIRONMENT}, got '${data.environment}'`);
+      }
+    }
+
+    // Set environment if provided
+    if (data.environment) {
+      patchState(this.store, { environment: data.environment as string });
     }
   }
 
@@ -241,8 +287,8 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
     });
 
     document.body.appendChild(modalWrapper);
-    (window as unknown as { currentModal?: HTMLElement }).currentModal =
-      modalWrapper;
+    // Store modal reference safely
+    (window as { currentModal?: HTMLElement }).currentModal = modalWrapper;
 
     const modal = document.createElement('div');
     modal.style.width = '480px';
@@ -263,182 +309,40 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit {
   }
 
   closeModal() {
-    const windowWithModal = window as unknown as { currentModal?: HTMLElement };
+    const windowWithModal = window as { currentModal?: HTMLElement };
     if (windowWithModal.currentModal) {
       windowWithModal.currentModal.remove();
       windowWithModal.currentModal = undefined;
     }
   }
 
-  private emitMaskedCardsChanged(maskedCardsCount: number): void {
-    window.postMessage(
-      {
-        type: 'MASTERCARD_MASKED_CARDS_CHANGED',
-        componentId: 'mastercard-click-to-pay',
-        maskedCardsCount
-      },
-      '*'
-    );
+  ngOnDestroy(): void {
+    // Execute all cleanup tasks
+    this.cleanupTasks.forEach(cleanup => cleanup());
+    this.cleanupTasks = [];
+    
+    // Clean up message handlers
+    this.messageHandler.cleanup();
+    
+    // Clean up modal if it exists
+    this.closeModal();
+    
+    // Clean up window references
+    const windowWithModal = window as { 
+      currentModal?: HTMLElement;
+      mastercardClickToPayComponent?: unknown;
+    };
+    if (windowWithModal.mastercardClickToPayComponent) {
+      delete windowWithModal.mastercardClickToPayComponent;
+    }
   }
 
   private setupWindowMessageHandlers(): void {
-    window.addEventListener('message', (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-
-      const respond = (success: boolean, data?: unknown, error?: string) => {
-        if (event.data.requestId) {
-          window.postMessage(
-            {
-              type: 'MASTERCARD_RESPONSE',
-              requestId: event.data.requestId,
-              success,
-              data,
-              error
-            },
-            event.origin
-          );
-        }
-      };
-
-      switch (event.data.type) {
-        case 'SET_CARD_DATA':
-          if (event.data.cardData) {
-            this.cardStore.setCardData(event.data.cardData);
-            console.log(
-              'Card data received via window message:',
-              event.data.cardData
-            );
-            respond(true, { cardDataSet: true });
-          } else {
-            respond(false, null, 'No card data provided');
-          }
-          break;
-
-        case 'CLEAR_CARD_DATA':
-          this.cardStore.clearCardData();
-          console.log('Card data cleared via window message');
-          respond(true, { cardDataCleared: true });
-          break;
-
-        case 'TRIGGER_ENCRYPT_CARD':
-          if (this.cardStore.canEncrypt()) {
-            this.store.encryptCard();
-            respond(true, { encryptionTriggered: true });
-          } else {
-            console.warn('Cannot encrypt card - card data not ready');
-            respond(false, null, 'Cannot encrypt card - card data not ready');
-          }
-          break;
-
-        case 'TRIGGER_CHECKOUT_NEW_CARD':
-          if (this.cardStore.canCheckout()) {
-            this.store.checkoutWithNewCard(
-              () => this.createModal(),
-              () => this.closeModal()
-            );
-            respond(true, { checkoutTriggered: true });
-          } else {
-            console.warn('Cannot checkout with new card - card not encrypted');
-            respond(
-              false,
-              null,
-              'Cannot checkout with new card - card not encrypted'
-            );
-          }
-          break;
-
-        case 'TRIGGER_CHECKOUT_WITH_CARD':
-          this.store.triggerCheckoutWithCard(
-            () => this.createModal(),
-            () => this.closeModal()
-          );
-          respond(true, { checkoutWithCardTriggered: true });
-          break;
-
-        case 'GET_COMPONENT_STATE':
-          respond(true, {
-            cardStore: {
-              isCardDataReady: this.cardStore.isCardDataReady(),
-              hasCardData: this.cardStore.hasCardData(),
-              canEncrypt: this.cardStore.canEncrypt(),
-              canCheckout: this.cardStore.canCheckout(),
-              isCardEncrypted: this.cardStore.isCardEncrypted()
-            },
-            mainStore: {
-              isFulfilled: this.store.isFulfilled(),
-              maskedCardsCount: this.store.maskedCards().length
-            }
-          });
-          break;
-      }
-    });
-
-    window.postMessage(
-      {
-        type: 'MASTERCARD_COMPONENT_READY',
-        componentId: 'mastercard-click-to-pay'
-      },
-      '*'
-    );
-
-    (
-      window as unknown as { mastercardClickToPayComponent: unknown }
-    ).mastercardClickToPayComponent = {
-      setCardData: (cardData: unknown) =>
-        this.sendMessageWithPromise('SET_CARD_DATA', { cardData }),
-      clearCardData: () => this.sendMessageWithPromise('CLEAR_CARD_DATA'),
-      encryptCard: () => this.sendMessageWithPromise('TRIGGER_ENCRYPT_CARD'),
-      checkoutWithNewCard: () =>
-        this.sendMessageWithPromise('TRIGGER_CHECKOUT_NEW_CARD'),
-      checkoutWithCard: () =>
-        this.sendMessageWithPromise('TRIGGER_CHECKOUT_WITH_CARD'),
-      getComponentState: () =>
-        this.sendMessageWithPromise('GET_COMPONENT_STATE'),
-      getCardStore: () => this.cardStore,
-      getStore: () => this.store
-    };
-  }
-
-  private sendMessageWithPromise(
-    type: string,
-    data?: unknown
-  ): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      const requestId = `${type}_${Date.now()}_${Math.random()}`;
-
-      const timeout = setTimeout(() => {
-        window.removeEventListener('message', responseHandler);
-        reject(new Error(`Timeout waiting for response to ${type}`));
-      }, 5000);
-
-      const responseHandler = (event: MessageEvent) => {
-        if (
-          event.data.type === 'MASTERCARD_RESPONSE' &&
-          event.data.requestId === requestId
-        ) {
-          clearTimeout(timeout);
-          window.removeEventListener('message', responseHandler);
-
-          if (event.data.success) {
-            resolve(event.data.data);
-          } else {
-            reject(new Error(event.data.error || 'Unknown error'));
-          }
-        }
-      };
-
-      window.addEventListener('message', responseHandler);
-
-      window.postMessage(
-        {
-          type,
-          requestId,
-          ...(data || {})
-        },
-        '*'
-      );
+    this.messageHandler.setupMessageHandlers({
+      cardStore: this.cardStore,
+      store: this.store,
+      createModal: () => this.createModal(),
+      closeModal: () => this.closeModal()
     });
   }
 }

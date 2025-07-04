@@ -119,6 +119,10 @@ export class MastercardClickToPayShowcaseComponent
       if (event.data.type === 'MASTERCARD_COMPONENT_READY') {
         this.componentReady = true;
         console.log('Component is ready');
+      } else if (event.data.type === 'MASTERCARD_MASKED_CARDS_CHANGED' && 
+                 event.data.componentId === 'mastercard-click-to-pay') {
+        console.log('Masked cards count changed:', event.data.maskedCardsCount);
+        // Handle the real-time card count updates here
       }
     });
 
@@ -286,7 +290,7 @@ export class MastercardClickToPayShowcaseComponent
         {
           type,
           requestId,
-          ...data
+          ...(data || {})
         },
         '*'
       );

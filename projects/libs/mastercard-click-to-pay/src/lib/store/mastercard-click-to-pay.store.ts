@@ -4,25 +4,18 @@ import {
   withComputed,
   withMethods,
   withHooks,
-  patchState,
-  StateSignal
+  patchState
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { withRequestStatus, setPending } from './request-status.feature';
 import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
 import { CardDataStore } from './card-data.store';
-import { Prettify } from '@ngrx/signals/src/ts-helpers';
 import {
   loadMastercardScript,
   loadMastercardUIStyle,
   loadMastercardUIScript
 } from '../helpers/script-loader.helpers';
-import {
-  MethodsDictionary,
-  SignalsDictionary,
-  SignalStoreSlices
-} from '@ngrx/signals/src/signal-store-models';
 import {
   MastercardInitRequest,
   MastercardInitResponse,
@@ -43,7 +36,8 @@ import {
   CheckoutWithCardRequest,
   CheckoutWithCardResponse,
   DpaData,
-  DpaTransactionOptions
+  DpaTransactionOptions,
+  PhoneNumber
 } from '../interfaces/mastercard-click-to-pay.interface';
 
 export const MastercardClickToPayStore = signalStore(
@@ -75,10 +69,11 @@ export const MastercardClickToPayStore = signalStore(
       const data = store.inputParams().data;
       const consumer: Partial<Consumer> = {};
 
-      if (data['ch_email']) consumer.emailAddress = data['ch_email'];
-      if (data['mobileNumber']) consumer.mobileNumber = data['mobileNumber'];
-      if (data['firstName']) consumer.firstName = data['firstName'];
-      if (data['lastName']) consumer.lastName = data['lastName'];
+      if (data['ch_email']) consumer.emailAddress = data['ch_email'] as string;
+      if (data['mobileNumber'])
+        consumer.mobileNumber = data['mobileNumber'] as PhoneNumber;
+      if (data['firstName']) consumer.firstName = data['firstName'] as string;
+      if (data['lastName']) consumer.lastName = data['lastName'] as string;
 
       return Object.keys(consumer).length > 0 ? consumer : null;
     }),
@@ -107,7 +102,8 @@ export const MastercardClickToPayStore = signalStore(
       cardStore = inject(CardDataStore)
     ) => {
       const initClickToPay = async () => {
-        const MastercardCheckoutServices = window['MastercardCheckoutServices'];
+        const globalWindow = window as unknown as MastercardGlobal;
+        const MastercardCheckoutServices = globalWindow.MastercardCheckoutServices;
         if (!MastercardCheckoutServices) {
           console.error(
             'MastercardCheckoutServices is not available on the window object.'
@@ -127,7 +123,8 @@ export const MastercardClickToPayStore = signalStore(
           const result: MastercardInitResponse = await mcCheckoutService.init(
             initData
           );
-          window.mcCheckoutServices = mcCheckoutService;
+          (window as unknown as MastercardGlobal).mcCheckoutServices =
+            mcCheckoutService;
           patchState(store, {
             availableCardBrands: result.availableCardBrands,
             availableServices: result.availableServices
@@ -140,13 +137,14 @@ export const MastercardClickToPayStore = signalStore(
       };
 
       const getCards = async () => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
         }
 
         try {
           const cardsResponse: MaskedCard[] =
-            await window.mcCheckoutServices.getCards();
+            await globalWindow.mcCheckoutServices!.getCards();
           patchState(store, { maskedCards: cardsResponse });
           console.log('getCards response:', cardsResponse);
         } catch (error) {
@@ -158,7 +156,8 @@ export const MastercardClickToPayStore = signalStore(
         createModal: () => Window | null,
         closeModal: () => void
       ) => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
         }
@@ -202,7 +201,9 @@ export const MastercardClickToPayStore = signalStore(
           };
 
           const authenticateResponse: AuthenticateResponse =
-            await window.mcCheckoutServices.authenticate(authenticateData);
+            await globalWindow.mcCheckoutServices!.authenticate(
+              authenticateData
+            );
           patchState(store, { maskedCards: authenticateResponse.cards || [] });
           console.log('authenticate response:', authenticateResponse);
 
@@ -215,7 +216,8 @@ export const MastercardClickToPayStore = signalStore(
       };
 
       const encryptCard = async () => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
         }
@@ -227,7 +229,7 @@ export const MastercardClickToPayStore = signalStore(
 
         try {
           const encryptCardResponse: EncryptCardResponse =
-            await window.mcCheckoutServices.encryptCard(
+            await globalWindow.mcCheckoutServices!.encryptCard(
               cardStore.cardData() as EncryptCardRequest
             );
           cardStore.setEncryptedCard(
@@ -244,7 +246,8 @@ export const MastercardClickToPayStore = signalStore(
         createModal: () => Window | null,
         closeModal: () => void
       ) => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
         }
@@ -276,7 +279,7 @@ export const MastercardClickToPayStore = signalStore(
           console.log(checkoutWithNewCardData);
 
           const checkoutWithNewCardResponse: CheckoutWithNewCardResponse =
-            await window.mcCheckoutServices.checkoutWithNewCard(
+            await globalWindow.mcCheckoutServices!.checkoutWithNewCard(
               checkoutWithNewCardData
             );
 
@@ -304,7 +307,8 @@ export const MastercardClickToPayStore = signalStore(
         createModal: () => Window | null,
         closeModal: () => void
       ) => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return;
         }
@@ -320,7 +324,7 @@ export const MastercardClickToPayStore = signalStore(
           console.log(checkoutWithCardData);
 
           const checkoutWithCardResponse: CheckoutWithCardResponse =
-            await window.mcCheckoutServices.checkoutWithCard(
+            await globalWindow.mcCheckoutServices!.checkoutWithCard(
               checkoutWithCardData
             );
 
@@ -334,7 +338,8 @@ export const MastercardClickToPayStore = signalStore(
       const signOut = async (
         recognitionToken?: string
       ): Promise<SignOutResponse | undefined> => {
-        if (!window.mcCheckoutServices) {
+        const globalWindow = window as unknown as MastercardGlobal;
+        if (!globalWindow.mcCheckoutServices) {
           console.error('Mastercard Click to Pay not initialized');
           return undefined;
         }
@@ -346,7 +351,7 @@ export const MastercardClickToPayStore = signalStore(
           }
 
           const signOutResponse: SignOutResponse =
-            await window.mcCheckoutServices.signOut(signOutData);
+            await globalWindow.mcCheckoutServices.signOut(signOutData);
 
           patchState(store, { maskedCards: signOutResponse.cards || [] });
           console.log('signOut response:', signOutResponse);
@@ -363,52 +368,66 @@ export const MastercardClickToPayStore = signalStore(
         closeModal: () => void
       ) => {
         try {
-          const [mastercardScript, uiStyle, uiScript] = [
-            loadMastercardScript(
-              store.environment(),
-              store.srcDpaId(),
-              store.locale()
-            ),
-            loadMastercardUIStyle(),
-            loadMastercardUIScript()
-          ];
+          // Load scripts in parallel for better performance
+          const [mastercardScript, uiStyle, uiScript] =
+            await Promise.allSettled([
+              loadMastercardScript(
+                store.environment(),
+                store.srcDpaId(),
+                store.locale()
+              ),
+              loadMastercardUIStyle(),
+              loadMastercardUIScript()
+            ]);
 
-          await mastercardScript;
+          // Check if critical script loading failed
+          if (mastercardScript.status === 'rejected') {
+            throw new Error(
+              `Failed to load Mastercard script: ${mastercardScript.reason}`
+            );
+          }
+
           await initClickToPay();
-          await Promise.all([uiStyle, uiScript]);
 
-          console.log('ROUND1');
+          // Check if UI scripts failed (non-critical)
+          if (uiStyle.status === 'rejected') {
+            console.warn('Failed to load UI style:', uiStyle.reason);
+          }
+          if (uiScript.status === 'rejected') {
+            console.warn('Failed to load UI script:', uiScript.reason);
+          }
+
           await getCards();
-          console.log('ROUND2');
 
           if (store.maskedCards().length === 0) {
-            console.log('ROUND3');
-            await authenticate(createModal, closeModal);
-            console.log('ROUND4');
+            try {
+              await authenticate(createModal, closeModal);
+            } catch (authError) {
+              console.warn('Authentication failed:', authError);
+              // Continue to fallback flow
+            }
 
             if (store.maskedCards().length === 0) {
-              console.log('ROUND5');
-              // Card data will be handled externally through CardDataStore
-              // The flow will continue when card data is provided and actions are triggered
               console.log(
                 'No cards found. Waiting for external card data input...'
               );
             }
           } else {
-            console.log('ROUND3-2');
-            // Cards are available, waiting for user to select one and trigger payment
             console.log(
               'Cards found. Waiting for card selection and payment trigger...'
             );
           }
         } catch (err) {
-          console.error('Error loading Mastercard Click to Pay:', err);
+          console.error('Critical error loading Mastercard Click to Pay:', err);
+          // Could emit error event here for external handling
+          throw err; // Re-throw to let component handle
         }
       };
 
       const setWindowServices = () => {
-        window.mastercardClickToPayStore = store;
-        window.mastercardClickToPayService = mastercardService;
+        const globalWindow = window as unknown as MastercardGlobal;
+        globalWindow.mastercardClickToPayStore = store as unknown;
+        globalWindow.mastercardClickToPayService = mastercardService as unknown;
       };
 
       const triggerCheckoutWithCard = async (
@@ -444,20 +463,13 @@ export const MastercardClickToPayStore = signalStore(
   })
 );
 
-declare global {
-  interface Window {
-    currentModal?: HTMLElement;
-    mcCheckoutServices: MastercardCheckoutService;
-    MastercardCheckoutServices?: MastercardCheckoutServices;
-    MastercardClickToPaySession?: unknown;
-    mastercardClickToPayService: MastercardClickToPayService;
-    mastercardClickToPayStore:
-      | Prettify<
-          SignalStoreSlices<object> &
-            SignalsDictionary &
-            MethodsDictionary &
-            StateSignal<object>
-        >
-      | unknown;
-  }
+// Local interface for Mastercard window properties
+interface MastercardGlobal {
+  currentModal?: HTMLElement;
+  mcCheckoutServices?: MastercardCheckoutService;
+  MastercardCheckoutServices?: MastercardCheckoutServices;
+  MastercardClickToPaySession?: unknown;
+  mastercardClickToPayService?: unknown;
+  mastercardClickToPayStore?: unknown;
+  mastercardClickToPayComponent?: unknown;
 }
