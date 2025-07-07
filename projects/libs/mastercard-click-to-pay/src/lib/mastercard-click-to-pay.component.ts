@@ -38,14 +38,16 @@ import { ERROR_MESSAGES } from './constants/error-messages';
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnDestroy {
+export class MastercardClickToPayComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   private readonly injector = inject(Injector);
   readonly store = inject(MastercardClickToPayStore);
   readonly cardStore = inject(CardDataStore);
   private readonly _service = inject(MastercardClickToPayService);
   private readonly eventsService = inject(MastercardEventsService);
   private readonly messageHandler = inject(MastercardMessageHandlerService);
-  
+
   // Cleanup tracking
   private cleanupTasks: (() => void)[] = [];
 
@@ -57,18 +59,23 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
 
     // Initialize card data if provided
     const encryptCardParams = value.data.encryptCardParams;
-    if (encryptCardParams && typeof encryptCardParams === 'object' && 
-        'primaryAccountNumber' in encryptCardParams && 
-        'panExpirationMonth' in encryptCardParams &&
-        'panExpirationYear' in encryptCardParams &&
-        'cardSecurityCode' in encryptCardParams) {
+    if (
+      encryptCardParams &&
+      typeof encryptCardParams === 'object' &&
+      'primaryAccountNumber' in encryptCardParams &&
+      'panExpirationMonth' in encryptCardParams &&
+      'panExpirationYear' in encryptCardParams &&
+      'cardSecurityCode' in encryptCardParams
+    ) {
       // Type assertion after validation
-      this.cardStore.setCardData(encryptCardParams as {
-        primaryAccountNumber: string;
-        panExpirationMonth: string;
-        panExpirationYear: string;
-        cardSecurityCode: string;
-      });
+      this.cardStore.setCardData(
+        encryptCardParams as {
+          primaryAccountNumber: string;
+          panExpirationMonth: string;
+          panExpirationYear: string;
+          cardSecurityCode: string;
+        }
+      );
     }
 
     console.log(
@@ -97,12 +104,16 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
     runInInjectionContext(this.injector, () => {
       effect(() => {
         const cards = this.store.maskedCards();
-        if (cards.length > 0) {
+        const authComplete = this.store.authenticationComplete();
+        const isLoading = this.store.isLoadingCards();
+        
+        if (!isLoading && cards.length > 0) {
           this.loadCardsIntoComponent(cards);
-        } else {
+        } else if (!isLoading && authComplete && cards.length === 0) {
+          console.log('No cards found after authentication, showing consent for new card registration');
           this.setupConsentListener();
         }
-      });
+      }, { allowSignalWrites: true });
 
       effect(() => {
         if (this.store.isFulfilled()) {
@@ -111,7 +122,7 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
             () => this.closeModal()
           );
         }
-      });
+      }, { allowSignalWrites: true });
 
       // Emit masked cards count changes (with optimization)
       let previousCount = 0;
@@ -236,11 +247,15 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
 
     // Validate required fields
     if (!inputParams.payment_method) {
-      throw new Error(`PAYMENT_METHOD_NOT_SET: ${ERROR_MESSAGES.PAYMENT_METHOD_NOT_SET}`);
+      throw new Error(
+        `PAYMENT_METHOD_NOT_SET: ${ERROR_MESSAGES.PAYMENT_METHOD_NOT_SET}`
+      );
     }
 
     if (inputParams.payment_method !== 'mastercard-click-to-pay') {
-      throw new Error(`INVALID_PAYMENT_METHOD: ${ERROR_MESSAGES.INVALID_PAYMENT_METHOD}, got '${inputParams.payment_method}'`);
+      throw new Error(
+        `INVALID_PAYMENT_METHOD: ${ERROR_MESSAGES.INVALID_PAYMENT_METHOD}, got '${inputParams.payment_method}'`
+      );
     }
 
     if (!data || typeof data !== 'object') {
@@ -255,9 +270,11 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
       if (!data.environment) {
         throw new Error(`ENV_NOT_SET: ${ERROR_MESSAGES.ENV_NOT_SET}`);
       }
-      
+
       if (data.environment !== 'production' && data.environment !== 'sandbox') {
-        throw new Error(`INVALID_ENVIRONMENT: ${ERROR_MESSAGES.INVALID_ENVIRONMENT}, got '${data.environment}'`);
+        throw new Error(
+          `INVALID_ENVIRONMENT: ${ERROR_MESSAGES.INVALID_ENVIRONMENT}, got '${data.environment}'`
+        );
       }
     }
 
@@ -320,15 +337,15 @@ export class MastercardClickToPayComponent implements OnInit, AfterViewInit, OnD
     // Execute all cleanup tasks
     this.cleanupTasks.forEach(cleanup => cleanup());
     this.cleanupTasks = [];
-    
+
     // Clean up message handlers
     this.messageHandler.cleanup();
-    
+
     // Clean up modal if it exists
     this.closeModal();
-    
+
     // Clean up window references
-    const windowWithModal = window as { 
+    const windowWithModal = window as {
       currentModal?: HTMLElement;
       mastercardClickToPayComponent?: unknown;
     };

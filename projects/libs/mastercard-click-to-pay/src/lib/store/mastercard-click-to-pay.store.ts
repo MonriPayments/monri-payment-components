@@ -57,7 +57,9 @@ export const MastercardClickToPayStore = signalStore(
     srcDpaId: '',
     dpaData: {} as DpaData,
     dpaTransactionOptions: {} as DpaTransactionOptions,
-    cardBrands: [] as Array<string>
+    cardBrands: [] as Array<string>,
+    authenticationComplete: false as boolean,
+    isLoadingCards: false as boolean
   }),
   withRequestStatus(),
   withComputed(store => ({
@@ -368,6 +370,8 @@ export const MastercardClickToPayStore = signalStore(
         closeModal: () => void
       ) => {
         try {
+          patchState(store, { isLoadingCards: true });
+          
           // Load scripts in parallel for better performance
           const [mastercardScript, uiStyle, uiScript] =
             await Promise.allSettled([
@@ -409,16 +413,20 @@ export const MastercardClickToPayStore = signalStore(
 
             if (store.maskedCards().length === 0) {
               console.log(
-                'No cards found. Waiting for external card data input...'
+                'No cards found after authentication. Showing consent for new card...'
               );
+              // The component will automatically show consent when maskedCards is empty
             }
+            patchState(store, { authenticationComplete: true, isLoadingCards: false });
           } else {
             console.log(
               'Cards found. Waiting for card selection and payment trigger...'
             );
+            patchState(store, { authenticationComplete: true, isLoadingCards: false });
           }
         } catch (err) {
           console.error('Critical error loading Mastercard Click to Pay:', err);
+          patchState(store, { isLoadingCards: false });
           // Could emit error event here for external handling
           throw err; // Re-throw to let component handle
         }

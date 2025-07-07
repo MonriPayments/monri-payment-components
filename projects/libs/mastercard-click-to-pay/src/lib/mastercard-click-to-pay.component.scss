@@ -1,0 +1,46 @@
+/*
+src-card-list {
+  --src-color-gray-lowest: transparent;
+  //--src-color-foreground: #8132a7;
+  //--src-card-art-width: 100px;
+  //--src-card-art-height: 60px;
+  //--src-card-preview-brand-font-size: 20px;
+  //--src-card-preview-number-font-color: red;
+  //--src-card-preview-subtext-font-size: 20px;
+  //--src-card-preview-subtext-color: purple;
+  //--src-error-color: green;
+  //--src-error-font-size: 16px;
+  --src-radio-item-icon-border-color-checked: #8132a7;
+  --src-accessibility-outline: 2px solid #8132a7;
+  //--src-accessibility-outline-offset: 2px;
+  //--src-list-card-item-padding-top-bottom: .7rem;
+  --src-list-card-item-padding-right-left: 0;
+}
+
+src-consent {
+  --src-root-container-border-color: rgba(0, 0, 0, 0.02);
+  --src-color-foreground: #8132a7;
+  --src-color-background: rgba(0, 0, 0, 0.02);
+}
+*/
+
+:host {
+  // Define CSS variables with default values that can be overridden
+  --mastercard-primary-color: #141413;
+  --mastercard-border-color: #e6e6e6;
+  --mastercard-background-color: #f7f7f7;
+  --mastercard-padding: 0;
+}
+
+src-card-list {
+  --src-color-gray-lowest: var(--mastercard-border-color);
+  --src-radio-item-icon-border-color-checked: var(--mastercard-primary-color);
+  --src-accessibility-outline: 2px solid var(--mastercard-primary-color);
+  --src-list-card-item-padding-right-left: var(--mastercard-padding);
+}
+
+src-consent {
+  --src-root-container-border-color: var(--mastercard-border-color);
+  --src-color-foreground: var(--mastercard-primary-color);
+  --src-color-background: var(--mastercard-background-color);
+}

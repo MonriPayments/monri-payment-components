@@ -1,6 +1,11 @@
 <div>
   <div id="container-mastercard">
-    @if (store.maskedCards().length > 0) {
+    @if (store.isLoadingCards()) {
+    <src-loader
+      [attr.locale]="store.locale()"
+    >
+    </src-loader>
+    } @else if (store.maskedCards().length > 0) {
     <src-card-list
       [attr.locale]="store.locale()"
       [attr.card-brands]="
@@ -13,9 +18,12 @@
       #cardList
     >
     </src-card-list>
-    } @else {
+    } @else if (store.authenticationComplete()) {
     <src-consent
       [attr.locale]="store.locale()"
+      [attr.card-brands]="
+        store.orderedAvailableCardBrandsWithMapping().join(',')
+      "
       [attr.dcf-suppressed]="'true'"
       [attr.display-remember-me]="'false'"
       [attr.dark]="store.darkTheme() ? '' : null"
