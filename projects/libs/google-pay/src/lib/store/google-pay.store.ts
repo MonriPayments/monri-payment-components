@@ -196,16 +196,15 @@ export const GooglePayStore = signalStore(
 
           googlePayService.newTransaction({ transaction: transactionData }).pipe(
             tap((response) => {
-              const transactionStatus = response?.transaction?.status;
               window.parent.postMessage({
                 type: 'PAYMENT_RESULT',
-                success: transactionStatus === TransactionStatus.approved,
+                transaction: response.transaction,
                 requestId
               }, '*');
             }),
             catchError((error) => {
               console.error('Error processing Google Pay:', error);
-              window.parent.postMessage({ type: 'PAYMENT_RESULT', success: false, requestId }, '*');
+              window.parent.postMessage({ type: 'PAYMENT_RESULT', transaction: null, requestId }, '*');
               return of(null);
             })
           ).subscribe();

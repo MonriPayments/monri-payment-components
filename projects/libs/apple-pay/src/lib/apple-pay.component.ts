@@ -4,9 +4,14 @@ import {ApplePayService} from './services/apple-pay.service';
 
 @Component({
   selector: 'lib-apple-pay',
-  templateUrl: './apple-pay.component.html',
+  template: `
+    <div class="container">
+      <div id="container-apple">
+        <p id="message"></p>
+      </div>
+    </div>
+  `,
   standalone: true,
-  styleUrls: ['./apple-pay.component.scss'],
   providers: [ApplePayStore, ApplePayService]
 })
 export class ApplePayComponent {

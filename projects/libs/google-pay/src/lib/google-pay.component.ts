@@ -4,9 +4,14 @@ import {GooglePayStore} from "./store/google-pay.store";
 
 @Component({
   selector: 'lib-google-pay',
-  templateUrl: './google-pay.component.html',
+  template: `
+    <div class="container">
+      <div id="container-google">
+        <p id="message"></p>
+      </div>
+    </div>
+  `,
   standalone: true,
-  styleUrls: ['./google-pay.component.scss'],
   providers: [GooglePayStore, GooglePayService]
 })
 export class GooglePayComponent {

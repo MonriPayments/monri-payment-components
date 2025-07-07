@@ -41,9 +41,9 @@ export const ApplePayStore = signalStore(
           const script = renderer.createElement('script');
           script.src =
             'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
-          script.crossOrigin = 'anonymous';
           script.onload = resolve;
           script.onerror = reject;
+          script.async = true;
           renderer.appendChild(document.body, script);
         });
       };
@@ -82,6 +82,7 @@ export const ApplePayStore = signalStore(
           'locale',
           store.appleButtonStyle().locale
         );
+        renderer.setStyle(applePayButton, 'width', '100%');
 
         renderer.appendChild(
           el.nativeElement.querySelector('#container-apple'),
@@ -112,7 +113,6 @@ export const ApplePayStore = signalStore(
 
 
       const handleMessage = async (event: MessageEvent) => {
-        console.log('Received message', event)
         const {type, data, requestId} = event.data;
 
         if (type === 'SET_INPUT') {
@@ -122,7 +122,6 @@ export const ApplePayStore = signalStore(
           loadApplePayScript().then(() => startPayment())
         }
         if (type === 'VALIDATE_MERCHANT') {
-          console.log('urls', new URL(event.origin), store.inputParams().data);
           applePayService.validateMerchant({
             data: store.inputParams().data,
             validation_url: data.validationURL,
@@ -154,16 +153,11 @@ export const ApplePayStore = signalStore(
           };
           applePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
             tap((response) => {
-              const transactionStatus = response?.transaction?.status;
-              if (transactionStatus === TransactionStatus.approved) {
-                window.parent.postMessage({type: 'PAYMENT_RESULT', success: true, requestId}, '*');
-              } else {
-                window.parent.postMessage({type: 'PAYMENT_RESULT', success: false, requestId}, '*');
-              }
+              window.parent.postMessage({type: 'PAYMENT_RESULT', transaction: response.transaction, requestId}, '*');
             }),
             catchError((error) => {
               console.error("Error processing Apple Pay:", error);
-              window.parent.postMessage({type: 'PAYMENT_RESULT', success: false, requestId}, '*');
+              window.parent.postMessage({type: 'PAYMENT_RESULT', transaction: null, requestId}, '*');
               return of(null);
             })
           ).subscribe();
