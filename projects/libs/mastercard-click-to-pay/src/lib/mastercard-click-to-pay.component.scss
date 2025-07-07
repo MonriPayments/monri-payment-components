@@ -26,10 +26,14 @@ src-consent {
 
 :host {
   // Define CSS variables with default values that can be overridden
-  --mastercard-primary-color: #141413;
-  --mastercard-border-color: #e6e6e6;
-  --mastercard-background-color: #f7f7f7;
-  --mastercard-padding: 0;
+  --mastercard-primary-color: var(--mc-primary-color, #141413);
+  --mastercard-border-color: var(--mc-border-color, #e6e6e6);
+  --mastercard-consent-border-color: var(
+    --mc-consent-border-color,
+    1px solid rgba(151, 151, 151, 0.3)
+  );
+  --mastercard-background-color: var(--mc-background-color, #f7f7f7);
+  --mastercard-padding: var(--mc-padding, 0);
 }
 
 src-card-list {
@@ -40,7 +44,7 @@ src-card-list {
 }
 
 src-consent {
-  --src-root-container-border-color: var(--mastercard-border-color);
+  --src-root-container-border-color: var(--mastercard-consent-border-color);
   --src-color-foreground: var(--mastercard-primary-color);
   --src-color-background: var(--mastercard-background-color);
 }
