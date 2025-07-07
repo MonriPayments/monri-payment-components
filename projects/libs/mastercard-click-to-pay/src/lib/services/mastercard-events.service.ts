@@ -25,9 +25,15 @@ export interface MastercardComponentReadyEvent extends MastercardEventBase {
   type: 'MASTERCARD_COMPONENT_READY';
 }
 
+export interface MastercardAuthenticationCompleteEvent extends MastercardEventBase {
+  type: 'MASTERCARD_AUTHENTICATION_COMPLETE';
+  maskedCardsCount: number;
+}
+
 export type MastercardEvent = 
   | MastercardMaskedCardsChangedEvent 
   | MastercardComponentReadyEvent 
+  | MastercardAuthenticationCompleteEvent
   | MastercardResponseEvent;
 
 @Injectable({
@@ -55,6 +61,14 @@ export class MastercardEventsService {
     this.postEvent({
       type: 'MASTERCARD_COMPONENT_READY',
       componentId: this.componentId
+    });
+  }
+
+  emitAuthenticationComplete(maskedCardsCount: number): void {
+    this.postEvent({
+      type: 'MASTERCARD_AUTHENTICATION_COMPLETE',
+      componentId: this.componentId,
+      maskedCardsCount
     });
   }
 

@@ -133,6 +133,19 @@ export class MastercardClickToPayComponent
           previousCount = maskedCardsCount;
         }
       });
+
+      // Emit authentication completion event
+      let previousAuthComplete = false;
+      effect(() => {
+        const authComplete = this.store.authenticationComplete();
+        const isLoading = this.store.isLoadingCards();
+        
+        if (authComplete && !isLoading && !previousAuthComplete) {
+          const maskedCardsCount = this.store.maskedCards().length;
+          this.eventsService.emitAuthenticationComplete(maskedCardsCount);
+          previousAuthComplete = true;
+        }
+      });
     });
   }
 
