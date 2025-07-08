@@ -12,9 +12,7 @@ import { StartPaymentRequest } from '../interfaces/alternative-payment-method.in
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
 import { CardDataStore } from './card-data.store';
 import {
-  loadMastercardScript,
-  loadMastercardUIStyle,
-  loadMastercardUIScript
+  loadMastercardScript
 } from '../helpers/script-loader.helpers';
 import {
   MastercardInitRequest,
@@ -59,7 +57,8 @@ export const MastercardClickToPayStore = signalStore(
     dpaTransactionOptions: {} as DpaTransactionOptions,
     cardBrands: [] as Array<string>,
     authenticationComplete: false as boolean,
-    isLoadingCards: false as boolean
+    isLoadingCards: false as boolean,
+    paymentInitiated: false as boolean
   }),
   withRequestStatus(),
   withComputed(store => ({
@@ -372,34 +371,14 @@ export const MastercardClickToPayStore = signalStore(
         try {
           patchState(store, { isLoadingCards: true });
           
-          // Load scripts in parallel for better performance
-          const [mastercardScript, uiStyle, uiScript] =
-            await Promise.allSettled([
-              loadMastercardScript(
-                store.environment(),
-                store.srcDpaId(),
-                store.locale()
-              ),
-              loadMastercardUIStyle(),
-              loadMastercardUIScript()
-            ]);
-
-          // Check if critical script loading failed
-          if (mastercardScript.status === 'rejected') {
-            throw new Error(
-              `Failed to load Mastercard script: ${mastercardScript.reason}`
-            );
-          }
+          // Load only the main Mastercard script (UI scripts already loaded in component)
+          await loadMastercardScript(
+            store.environment(),
+            store.srcDpaId(),
+            store.locale()
+          );
 
           await initClickToPay();
-
-          // Check if UI scripts failed (non-critical)
-          if (uiStyle.status === 'rejected') {
-            console.warn('Failed to load UI style:', uiStyle.reason);
-          }
-          if (uiScript.status === 'rejected') {
-            console.warn('Failed to load UI script:', uiScript.reason);
-          }
 
           await getCards();
 

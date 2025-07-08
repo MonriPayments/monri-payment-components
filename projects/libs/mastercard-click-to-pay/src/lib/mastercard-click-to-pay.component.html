@@ -1,10 +1,17 @@
 <div>
   <div id="container-mastercard">
-    @if (store.isLoadingCards()) {
-    <src-loader
+    @if (!store.paymentInitiated()) {
+    <src-button
       [attr.locale]="store.locale()"
+      [attr.card-brands]="
+        store.orderedAvailableCardBrandsWithMapping().join(',')
+      "
+      [attr.dark]="store.darkTheme() ? '' : null"
+      #paymentButton
     >
-    </src-loader>
+    </src-button>
+    } @else if (store.isLoadingCards()) {
+    <src-loader [attr.locale]="store.locale()"> </src-loader>
     } @else if (store.maskedCards().length > 0) {
     <src-card-list
       [attr.locale]="store.locale()"

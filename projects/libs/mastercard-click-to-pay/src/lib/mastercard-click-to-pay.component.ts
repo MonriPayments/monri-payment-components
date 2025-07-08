@@ -25,6 +25,7 @@ import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
 import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interface';
 import { ERROR_MESSAGES } from './constants/error-messages';
+import { loadMastercardUIStyle, loadMastercardUIScript } from './helpers/script-loader.helpers';
 
 @Component({
   selector: 'lib-mastercard-click-to-pay',
@@ -51,6 +52,7 @@ export class MastercardClickToPayComponent
   // Cleanup tracking
   private cleanupTasks: (() => void)[] = [];
 
+  @ViewChild('paymentButton', { static: false }) paymentButtonRef?: ElementRef;
   @ViewChild('cardList', { static: false }) cardListRef?: ElementRef;
   @ViewChild('consent', { static: false }) consentRef?: ElementRef;
 
@@ -94,8 +96,9 @@ export class MastercardClickToPayComponent
   }
 
   ngOnInit(): void {
-    this.validateInputParams();
-    this.startPayment();
+    // Component initializes but payment flow only starts when button is clicked
+    console.log('Mastercard Click to Pay component initialized');
+    this.loadUIScripts();
   }
 
   ngAfterViewInit(): void {
@@ -113,10 +116,15 @@ export class MastercardClickToPayComponent
           console.log('No cards found after authentication, showing consent for new card registration');
           this.setupConsentListener();
         }
+        
+        // Setup payment button listener when it's available
+        if (!this.store.paymentInitiated()) {
+          this.setupPaymentButtonListener();
+        }
       }, { allowSignalWrites: true });
 
       effect(() => {
-        if (this.store.isFulfilled()) {
+        if (this.store.isFulfilled() && this.store.paymentInitiated()) {
           this.store.onLoad(
             () => this.createModal(),
             () => this.closeModal()
@@ -194,6 +202,28 @@ export class MastercardClickToPayComponent
     this.store.signOut(detail?.recognitionToken);
   }
 
+  private setupPaymentButtonListener(): void {
+    if (!this.paymentButtonRef) {
+      afterNextRender(
+        () => {
+          this.setupPaymentButtonListener();
+        },
+        { injector: this.injector }
+      );
+      return;
+    }
+
+    if (this.paymentButtonRef?.nativeElement) {
+      this.paymentButtonRef.nativeElement.addEventListener(
+        'click',
+        (event: CustomEvent) => {
+          console.log('Payment button click event:', event.detail);
+          this.onPaymentButtonClick();
+        }
+      );
+    }
+  }
+
   private setupConsentListener(): void {
     if (!this.consentRef) {
       afterNextRender(
@@ -224,6 +254,38 @@ export class MastercardClickToPayComponent
     patchState(this.store, {
       recognitionTokenRequested: detail.checkoutAsGuest
     });
+  }
+
+  private async loadUIScripts(): Promise<void> {
+    try {
+      // Load UI scripts in parallel for button rendering
+      await Promise.allSettled([
+        loadMastercardUIStyle(),
+        loadMastercardUIScript()
+      ]);
+      
+      console.log('UI scripts loaded successfully');
+    } catch (error) {
+      console.error('Failed to load UI scripts:', error);
+    }
+  }
+
+  private onPaymentButtonClick(): void {
+    console.log('Payment button clicked, starting payment flow');
+    
+    // Emit button clicked event for parent integration
+    this.eventsService.emitButtonClicked();
+    
+    try {
+      this.validateInputParams();
+      patchState(this.store, { paymentInitiated: true });
+      this.startPayment();
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      // Reset payment initiated state on error
+      patchState(this.store, { paymentInitiated: false });
+      throw error;
+    }
   }
 
   private startPayment() {
