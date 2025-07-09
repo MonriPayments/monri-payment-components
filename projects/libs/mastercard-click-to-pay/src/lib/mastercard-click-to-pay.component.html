@@ -4,7 +4,7 @@
     <src-button
       [attr.locale]="store.locale()"
       [attr.card-brands]="
-        store.orderedAvailableCardBrandsWithMapping().join(',')
+        store.orderedCardBrandsForButton().join(',')
       "
       [attr.dark]="store.darkTheme() ? '' : null"
       #paymentButton

@@ -88,12 +88,37 @@ export const MastercardClickToPayStore = signalStore(
       const available = store.availableCardBrands();
       const predefinedOrder = store.cardBrands();
 
-      const filtered = predefinedOrder.filter(brand =>
-        available.includes(brand)
-      );
-      return filtered.map(brand =>
+      // If we have authentication results, filter by available brands
+      if (available.length > 0) {
+        const filtered = predefinedOrder.filter(brand =>
+          available.includes(brand)
+        );
+        return filtered.map(brand =>
+          brand === 'amex' ? 'american-express' : brand
+        );
+      }
+
+      // Before authentication, use all configured card brands
+      return predefinedOrder.map(brand =>
         brand === 'amex' ? 'american-express' : brand
       );
+    }),
+    // SRC Button expects 'amex' instead of 'american-express'
+    orderedCardBrandsForButton: computed(() => {
+      const available = store.availableCardBrands();
+      const predefinedOrder = store.cardBrands();
+
+      let brandsToUse = predefinedOrder;
+
+      // If we have authentication results, filter by available brands
+      if (available.length > 0) {
+        brandsToUse = predefinedOrder.filter(brand =>
+          available.includes(brand)
+        );
+      }
+
+      // SRC Button uses 'amex' not 'american-express'
+      return brandsToUse; // Keep original naming including 'amex'
     })
   })),
   withMethods(

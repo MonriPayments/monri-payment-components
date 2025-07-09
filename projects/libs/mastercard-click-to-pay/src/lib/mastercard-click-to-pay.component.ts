@@ -59,6 +59,12 @@ export class MastercardClickToPayComponent
   @Input() set inputParams(value: StartPaymentRequest) {
     patchState(this.store, { inputParams: value });
 
+    // Set cardBrands from enabled_cards if provided
+    const enabledCards = value.data['enabled_cards'];
+    if (enabledCards && Array.isArray(enabledCards)) {
+      patchState(this.store, { cardBrands: enabledCards as string[] });
+    }
+
     // Initialize card data if provided
     const encryptCardParams = value.data.encryptCardParams;
     if (
