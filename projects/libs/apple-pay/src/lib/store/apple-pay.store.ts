@@ -82,7 +82,6 @@ export const ApplePayStore = signalStore(
           'locale',
           store.appleButtonStyle().locale
         );
-        renderer.setStyle(applePayButton, 'width', '100%');
 
         renderer.appendChild(
           el.nativeElement.querySelector('#container-apple'),
