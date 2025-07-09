@@ -1,16 +1,16 @@
-import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import { computed, ElementRef, inject, Renderer2 } from '@angular/core';
-import { StartPaymentRequest, TransactionStatus } from '../interfaces/alternative-payment-method.interface';
-import { GooglePayService } from '../services/google-pay.service';
-import { catchError, of, take, tap } from 'rxjs';
+import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {computed, ElementRef, inject, Renderer2} from '@angular/core';
+import {StartPaymentRequest} from '../interfaces/alternative-payment-method.interface';
+import {GooglePayService} from '../services/google-pay.service';
+import {catchError, of, take, tap} from 'rxjs';
 import {
   GoogleErrorState,
   GoogleIsReadyToPayRequest,
   GooglePaymentDataRequest,
   GoogleTransactionInfo,
-  GoogleTransactionState
+  GoogleTransactionState, MessageType
 } from '../models/google-pay.models';
-import { withRequestStatus } from './request-status.feature';
+import {withRequestStatus} from './request-status.feature';
 
 declare var google: any;
 
@@ -156,8 +156,11 @@ export const GooglePayStore = signalStore(
             }
           })
           .catch((err: any) => {
-            console.error('Google Pay isReadyToPay failed:', err);
-            window.parent.postMessage({ type: 'MERCHANT_VALIDATION_ERROR', error: err, requestId: Date.now() }, '*');
+            window.parent.postMessage({
+              type: MessageType.MERCHANT_VALIDATION_ERROR,
+              error: err,
+              requestId: Date.now()
+            }, '*');
           });
       };
 
@@ -166,19 +169,23 @@ export const GooglePayStore = signalStore(
           ...store.googlePaymentDataRequest(),
           transactionInfo: store.googleTransactionInfo()
         };
-        window.parent.postMessage({ type: 'START_GOOGLE_PAY_SESSION', request: paymentDataRequest, requestId: Date.now() }, '*');
+        window.parent.postMessage({
+          type: MessageType.START_GOOGLE_PAY_SESSION,
+          request: paymentDataRequest,
+          requestId: Date.now()
+        }, '*');
       };
 
       const handleMessage = async (event: MessageEvent) => {
-        const { type, data, requestId } = event.data;
+        const {type, payload, requestId} = event.data;
 
-        if (type === 'SET_INPUT') {
+        if (type === MessageType.SET_INPUT) {
           patchState(store, {
-            inputParams: event.data.payload.inputParams
+            inputParams: payload.inputParams
           });
           loadGooglePayScript().then(() => startPayment());
         }
-        if (type === 'PAYMENT_AUTHORIZED') {
+        if (type === MessageType.PAYMENT_AUTHORIZED) {
           const transactionData = {
             trx_token: store.inputParams().data['trx_token'],
             language: 'en',
@@ -191,20 +198,19 @@ export const GooglePayStore = signalStore(
             ch_email: store.inputParams().data['transaction']['ch_email' as any],
             meta: store.inputParams().data['transaction']['meta' as any] || {},
             payment_method_type: 'google-pay',
-            payment_method_data: data?.payment?.paymentMethodData?.tokenizationData?.token
+            payment_method_data: payload?.payment?.paymentMethodData?.tokenizationData?.token
           };
 
-          googlePayService.newTransaction({ transaction: transactionData }).pipe(
+          googlePayService.newTransaction({transaction: transactionData}).pipe(
             tap((response) => {
               window.parent.postMessage({
-                type: 'PAYMENT_RESULT',
+                type: MessageType.PAYMENT_RESULT,
                 transaction: response.transaction,
                 requestId
               }, '*');
             }),
-            catchError((error) => {
-              console.error('Error processing Google Pay:', error);
-              window.parent.postMessage({ type: 'PAYMENT_RESULT', transaction: null, requestId }, '*');
+            catchError(() => {
+              window.parent.postMessage({type: MessageType.PAYMENT_RESULT, transaction: null, requestId}, '*');
               return of(null);
             })
           ).subscribe();
