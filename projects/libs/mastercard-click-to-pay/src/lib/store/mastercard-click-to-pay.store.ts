@@ -7,13 +7,12 @@ import {
   patchState
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { withRequestStatus, setPending } from './request-status.feature';
 import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
 import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
 import { CardDataStore } from './card-data.store';
-import {
-  loadMastercardScript
-} from '../helpers/script-loader.helpers';
+import { loadMastercardScript } from '../helpers/script-loader.helpers';
 import {
   MastercardInitRequest,
   MastercardInitResponse,
@@ -129,7 +128,8 @@ export const MastercardClickToPayStore = signalStore(
     ) => {
       const initClickToPay = async () => {
         const globalWindow = window as unknown as MastercardGlobal;
-        const MastercardCheckoutServices = globalWindow.MastercardCheckoutServices;
+        const MastercardCheckoutServices =
+          globalWindow.MastercardCheckoutServices;
         if (!MastercardCheckoutServices) {
           console.error(
             'MastercardCheckoutServices is not available on the window object.'
@@ -321,6 +321,9 @@ export const MastercardClickToPayStore = signalStore(
             checkoutWithNewCardResponse
           );
 
+          // Create transaction after successful checkout
+          await createTransaction(checkoutWithNewCardResponse, 'NEW_CARD');
+
           // Close popup after successful checkout
           closeModal();
         } catch (error) {
@@ -355,9 +358,86 @@ export const MastercardClickToPayStore = signalStore(
             );
 
           console.log('checkoutWithCard response:', checkoutWithCardResponse);
+
+          // Create transaction after successful checkout
+          await createTransaction(checkoutWithCardResponse, 'EXISTING_CARD');
         } catch (error) {
           console.error('checkoutWithCard failed:', error);
           closeModal();
+        }
+      };
+
+      const createTransaction = async (
+        checkoutResponse:
+          | CheckoutWithNewCardResponse
+          | CheckoutWithCardResponse,
+        checkoutType: 'NEW_CARD' | 'EXISTING_CARD'
+      ) => {
+        try {
+          const inputParams = store.inputParams();
+
+          // Build payment_method_data from checkout response
+          const paymentMethodData = {
+            /*dpaTransactionOptions: {
+              transactionAmount: {
+                transactionAmount: inputParams.amount?.toString() || inputParams.data.amount?.toString() || "0.0",
+                transactionCurrencyCode: inputParams.currency || inputParams.data.currency || "USD"
+              }
+            },*/
+            srcDpaId: store.srcDpaId(),
+            correlationId:
+              checkoutResponse.checkoutResponseData?.srcCorrelationId || '',
+            checkoutType: 'CLICK_TO_PAY',
+            checkoutReference: {
+              type: 'MERCHANT_TRANSACTION_ID',
+              data: {
+                merchantTransactionId:
+                  checkoutResponse.headers?.['merchant-transaction-id'] || ''
+              }
+            }
+          };
+
+          // Build transaction request
+          const transactionRequest = {
+            transaction: {
+              trx_token: inputParams.trx_token || '',
+              language: store.locale(),
+              ch_full_name:
+                inputParams.data.ch_full_name ||
+                `${inputParams.data.firstName || ''} ${
+                  inputParams.data.lastName || ''
+                }`.trim(),
+              ch_address: inputParams.data.ch_address || '',
+              ch_city: inputParams.data.ch_city || '',
+              ch_zip: inputParams.data.ch_zip || '',
+              ch_country: inputParams.data.ch_country || '',
+              ch_phone: inputParams.data.ch_phone || '',
+              ch_email: inputParams.data.ch_email || '',
+              meta: {
+                checkoutType,
+                mastercardResponse: checkoutResponse
+              },
+              payment_method_type: 'mastercard-click-to-pay',
+              payment_method_data: paymentMethodData
+            }
+          };
+
+          console.log('Creating transaction:', transactionRequest);
+
+          const result = await firstValueFrom(
+            mastercardService.newTransaction(
+              transactionRequest,
+              store.environment()
+            )
+          );
+
+          console.log('Transaction created successfully:', result);
+
+          return result;
+        } catch (error) {
+          console.error('Transaction creation failed:', error);
+
+          throw error;
         }
       };
 
@@ -395,7 +475,7 @@ export const MastercardClickToPayStore = signalStore(
       ) => {
         try {
           patchState(store, { isLoadingCards: true });
-          
+
           // Load only the main Mastercard script (UI scripts already loaded in component)
           await loadMastercardScript(
             store.environment(),
@@ -421,12 +501,18 @@ export const MastercardClickToPayStore = signalStore(
               );
               // The component will automatically show consent when maskedCards is empty
             }
-            patchState(store, { authenticationComplete: true, isLoadingCards: false });
+            patchState(store, {
+              authenticationComplete: true,
+              isLoadingCards: false
+            });
           } else {
             console.log(
               'Cards found. Waiting for card selection and payment trigger...'
             );
-            patchState(store, { authenticationComplete: true, isLoadingCards: false });
+            patchState(store, {
+              authenticationComplete: true,
+              isLoadingCards: false
+            });
           }
         } catch (err) {
           console.error('Critical error loading Mastercard Click to Pay:', err);

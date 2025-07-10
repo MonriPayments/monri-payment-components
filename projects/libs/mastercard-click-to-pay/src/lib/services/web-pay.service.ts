@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
+  NewCardTransactionRequest,
   StartPaymentRequest,
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
@@ -20,6 +21,25 @@ export class WebPayService {
     return this.httpClient.post<StartPaymentResponse>(
       `/v2/direct-payment/mastercard-click-to-pay/${req.data['trx_token']}/start-payment`,
       JSON.stringify({}),
+      { headers }
+    );
+  }
+
+  newTransaction(
+    req: NewCardTransactionRequest,
+    env: string | undefined
+  ): Observable<unknown> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    let hostname = 'ipgtest';
+    if (env) {
+      hostname = env === 'test' ? 'ipgtest' : 'ipg';
+    }
+
+    return this.httpClient.post<unknown>(
+      `https://${hostname}.monri.com/v2/transaction`,
+      JSON.stringify(req),
       { headers }
     );
   }

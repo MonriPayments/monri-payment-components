@@ -315,6 +315,7 @@ export interface CheckoutWithCardResponse {
   idToken?: string;
   network?: string;
   headers?: CheckoutResponseHeaders;
+  checkoutResponseData?: CheckoutResponseData;
 }
 
 export interface CheckoutWithNewCardResponse {

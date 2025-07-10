@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import {
   AlternativePaymentMethodInterface,
+  NewCardTransactionRequest,
   StartPaymentRequest,
   StartPaymentResponse
 } from '../interfaces/alternative-payment-method.interface';
@@ -32,9 +33,17 @@ export class MastercardClickToPayService
     }
 
     return this.webPayService.startPayment({
+      trx_token: params.trx_token,
       payment_method: params.payment_method,
       data: params.data
     });
+  }
+
+  public newTransaction(
+    params: NewCardTransactionRequest,
+    env: string | undefined
+  ): Observable<unknown> {
+    return this.webPayService.newTransaction(params, env);
   }
 
   get webPayService(): WebPayService {

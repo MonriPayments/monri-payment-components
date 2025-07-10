@@ -151,6 +151,7 @@ export class MastercardClickToPayShowcaseComponent
         ...environment
         // NOTE: No encryptCardParams
       },
+      trx_token: '',
       payment_method: 'mastercard-click-to-pay',
       is_test: true
     };
