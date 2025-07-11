@@ -33,10 +33,10 @@ export const routes: Routes = [
           )
       },
       {
-        path: 'mastercard-click-to-pay',
+        path: 'mastercard-c2p',
         loadComponent: () =>
-          import('./components/mastercard-click-to-pay/mastercard-click-to-pay-showcase.component').then(
-            x => x.MastercardClickToPayShowcaseComponent
+          import('./components/mastercard-c2p/mastercard-c2p-showcase.component').then(
+            x => x.MastercardC2pShowcaseComponent
           )
       }
     ]

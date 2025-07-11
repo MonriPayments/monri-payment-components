@@ -10,7 +10,7 @@ import { computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { withRequestStatus, setPending } from './request-status.feature';
 import { StartPaymentRequest } from '../interfaces/alternative-payment-method.interface';
-import { MastercardClickToPayService } from '../services/mastercard-click-to-pay.service';
+import { MastercardC2pService } from '../services/mastercard-c2p.service';
 import { CardDataStore } from './card-data.store';
 import { loadMastercardScript } from '../helpers/script-loader.helpers';
 import {
@@ -35,9 +35,9 @@ import {
   DpaData,
   DpaTransactionOptions,
   PhoneNumber
-} from '../interfaces/mastercard-click-to-pay.interface';
+} from '../interfaces/mastercard-c2p.interface';
 
-export const MastercardClickToPayStore = signalStore(
+export const MastercardC2pStore = signalStore(
   withState({
     inputParams: {
       payment_method: '',
@@ -123,10 +123,10 @@ export const MastercardClickToPayStore = signalStore(
   withMethods(
     (
       store,
-      mastercardService = inject(MastercardClickToPayService),
+      mastercardService = inject(MastercardC2pService),
       cardStore = inject(CardDataStore)
     ) => {
-      const initClickToPay = async () => {
+      const initC2p = async () => {
         const globalWindow = window as unknown as MastercardGlobal;
         const MastercardCheckoutServices =
           globalWindow.MastercardCheckoutServices;
@@ -156,16 +156,16 @@ export const MastercardClickToPayStore = signalStore(
             availableServices: result.availableServices
           });
 
-          console.log('Mastercard Click to Pay init successful', result);
+          console.log('Mastercard C2P init successful', result);
         } catch (error) {
-          console.error('Mastercard Click to Pay init() failed:', error);
+          console.error('Mastercard C2P init() failed:', error);
         }
       };
 
       const getCards = async () => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
         }
 
         try {
@@ -184,7 +184,7 @@ export const MastercardClickToPayStore = signalStore(
       ) => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
           return;
         }
 
@@ -244,7 +244,7 @@ export const MastercardClickToPayStore = signalStore(
       const encryptCard = async () => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
           return;
         }
 
@@ -274,7 +274,7 @@ export const MastercardClickToPayStore = signalStore(
       ) => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
           return;
         }
 
@@ -338,7 +338,7 @@ export const MastercardClickToPayStore = signalStore(
       ) => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
           return;
         }
 
@@ -417,7 +417,7 @@ export const MastercardClickToPayStore = signalStore(
                 checkoutType,
                 mastercardResponse: checkoutResponse
               },
-              payment_method_type: 'mastercard-click-to-pay',
+              payment_method_type: 'mastercard-c2p',
               payment_method_data: paymentMethodData
             }
           };
@@ -446,7 +446,7 @@ export const MastercardClickToPayStore = signalStore(
       ): Promise<SignOutResponse | undefined> => {
         const globalWindow = window as unknown as MastercardGlobal;
         if (!globalWindow.mcCheckoutServices) {
-          console.error('Mastercard Click to Pay not initialized');
+          console.error('Mastercard C2P not initialized');
           return undefined;
         }
 
@@ -514,7 +514,7 @@ export const MastercardClickToPayStore = signalStore(
             store.locale()
           );
 
-          await initClickToPay();
+          await initC2p();
 
           await getCards();
 
@@ -546,7 +546,7 @@ export const MastercardClickToPayStore = signalStore(
             });
           }
         } catch (err) {
-          console.error('Critical error loading Mastercard Click to Pay:', err);
+          console.error('Critical error loading Mastercard C2P:', err);
           patchState(store, { isLoadingCards: false });
           // Could emit error event here for external handling
           throw err; // Re-throw to let component handle
@@ -555,8 +555,8 @@ export const MastercardClickToPayStore = signalStore(
 
       const setWindowServices = () => {
         const globalWindow = window as unknown as MastercardGlobal;
-        globalWindow.mastercardClickToPayStore = store as unknown;
-        globalWindow.mastercardClickToPayService = mastercardService as unknown;
+        globalWindow.mastercardC2pStore = store as unknown;
+        globalWindow.mastercardC2pService = mastercardService as unknown;
       };
 
       const triggerCheckoutWithCard = async (
@@ -600,8 +600,8 @@ interface MastercardGlobal {
   currentModal?: HTMLElement;
   mcCheckoutServices?: MastercardCheckoutService;
   MastercardCheckoutServices?: MastercardCheckoutServices;
-  MastercardClickToPaySession?: unknown;
-  mastercardClickToPayService?: unknown;
-  mastercardClickToPayStore?: unknown;
-  mastercardClickToPayComponent?: unknown;
+  MastercardC2pSession?: unknown;
+  mastercardC2pService?: unknown;
+  mastercardC2pStore?: unknown;
+  mastercardC2pComponent?: unknown;
 }

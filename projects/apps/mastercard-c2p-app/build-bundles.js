@@ -7,8 +7,8 @@ const sourceDir = path.join(
   '..',
   '..',
   'dist',
-  'mastercard-click-to-pay-app',
-  'mastercard-click-to-pay-component.js'
+  'mastercard-c2p-app',
+  'mastercard-c2p-component.js'
 );
 
 const webPayDir = path.join(

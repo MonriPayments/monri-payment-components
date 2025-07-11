@@ -11,7 +11,7 @@
       "google-pay": ["./dist/google-pay"],
       "keks-pay": ["./dist/keks-pay"],
       "apple-pay": ["./dist/apple-pay"],
-      "mastercard-click-to-pay": ["./dist/mastercard-click-to-pay"]
+      "mastercard-c2p": ["./dist/mastercard-c2p"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

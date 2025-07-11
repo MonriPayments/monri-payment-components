@@ -14,38 +14,38 @@ import {
   runInInjectionContext,
   afterNextRender
 } from '@angular/core';
-import { MastercardClickToPayService } from './services/mastercard-click-to-pay.service';
+import { MastercardC2pService } from './services/mastercard-c2p.service';
 import { MastercardEventsService } from './services/mastercard-events.service';
 import { MastercardMessageHandlerService } from './services/mastercard-message-handler.service';
 import { take } from 'rxjs';
 import { StartPaymentRequest } from './interfaces/alternative-payment-method.interface';
-import { MastercardClickToPayStore } from './store/mastercard-click-to-pay.store';
+import { MastercardC2pStore } from './store/mastercard-c2p.store';
 import { CardDataStore } from './store/card-data.store';
 import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
-import { ComplianceSettings } from './interfaces/mastercard-click-to-pay.interface';
+import { ComplianceSettings } from './interfaces/mastercard-c2p.interface';
 import { ERROR_MESSAGES } from './constants/error-messages';
 import { loadMastercardUIStyle, loadMastercardUIScript } from './helpers/script-loader.helpers';
 
 @Component({
-  selector: 'lib-mastercard-click-to-pay',
+  selector: 'lib-mastercard-c2p',
   standalone: true,
-  templateUrl: 'mastercard-click-to-pay.component.html',
-  styleUrl: 'mastercard-click-to-pay.component.scss',
+  templateUrl: 'mastercard-c2p.component.html',
+  styleUrl: 'mastercard-c2p.component.scss',
   providers: [
-    MastercardClickToPayService,
-    MastercardClickToPayStore,
+    MastercardC2pService,
+    MastercardC2pStore,
     CardDataStore
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class MastercardClickToPayComponent
+export class MastercardC2pComponent
   implements OnInit, AfterViewInit, OnDestroy
 {
   private readonly injector = inject(Injector);
-  readonly store = inject(MastercardClickToPayStore);
+  readonly store = inject(MastercardC2pStore);
   readonly cardStore = inject(CardDataStore);
-  private readonly _service = inject(MastercardClickToPayService);
+  private readonly _service = inject(MastercardC2pService);
   private readonly eventsService = inject(MastercardEventsService);
   private readonly messageHandler = inject(MastercardMessageHandlerService);
 
@@ -87,12 +87,12 @@ export class MastercardClickToPayComponent
     }
 
     console.log(
-      'Mastercard Click To Pay inputParams:',
+      'Mastercard C2P inputParams:',
       this.store.inputParams()
     );
   }
 
-  get mastercardClickToPayService(): MastercardClickToPayService {
+  get mastercardC2pService(): MastercardC2pService {
     return this._service;
   }
 
@@ -103,7 +103,7 @@ export class MastercardClickToPayComponent
 
   ngOnInit(): void {
     // Component initializes but payment flow only starts when button is clicked
-    console.log('Mastercard Click to Pay component initialized');
+    console.log('Mastercard C2P component initialized');
     this.loadUIScripts();
   }
 
@@ -333,7 +333,7 @@ export class MastercardClickToPayComponent
       );
     }
 
-    if (inputParams.payment_method !== 'mastercard-click-to-pay') {
+    if (inputParams.payment_method !== 'mastercard-c2p') {
       throw new Error(
         `INVALID_PAYMENT_METHOD: ${ERROR_MESSAGES.INVALID_PAYMENT_METHOD}, got '${inputParams.payment_method}'`
       );
@@ -428,10 +428,10 @@ export class MastercardClickToPayComponent
     // Clean up window references
     const windowWithModal = window as {
       currentModal?: HTMLElement;
-      mastercardClickToPayComponent?: unknown;
+      mastercardC2pComponent?: unknown;
     };
-    if (windowWithModal.mastercardClickToPayComponent) {
-      delete windowWithModal.mastercardClickToPayComponent;
+    if (windowWithModal.mastercardC2pComponent) {
+      delete windowWithModal.mastercardC2pComponent;
     }
   }
 

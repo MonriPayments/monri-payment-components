@@ -1,24 +1,23 @@
 import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
-import { MastercardClickToPayComponent } from '../../../../../libs/mastercard-click-to-pay/src/lib/mastercard-click-to-pay.component';
+import { MastercardC2pComponent, StartPaymentRequest } from '../../../../../libs/mastercard-c2p/src/public-api';
 import { createCustomElement } from '@angular/elements';
-import { StartPaymentRequest } from '../../../../../libs/mastercard-click-to-pay/src/lib/interfaces/alternative-payment-method.interface';
 import { environment } from './environments/environment';
 
-interface MastercardClickToPayElement extends HTMLElement {
+interface MastercardC2pElement extends HTMLElement {
   inputParams: StartPaymentRequest;
 }
 
 @Component({
-  selector: 'app-mastercard-click-to-pay',
+  selector: 'app-mastercard-c2p',
   standalone: true,
-  imports: [MastercardClickToPayComponent],
+  imports: [MastercardC2pComponent],
   template: `
     <div
       style="display: flex; gap: 1rem; padding: 1rem; flex-direction: column;"
     >
       <div
         style="width: 500px; height: 400px;"
-        id="mastercard-click-to-pay-component"
+        id="mastercard-c2p-component"
       ></div>
 
       <div style="border: 1px solid #ddd; padding: 1rem; background: #f9f9f9;">
@@ -107,11 +106,11 @@ interface MastercardClickToPayElement extends HTMLElement {
     </div>
   `
 })
-export class MastercardClickToPayShowcaseComponent
+export class MastercardC2pShowcaseComponent
   implements OnInit, OnDestroy
 {
   readonly #injector = inject(Injector);
-  private mastercardClickToPayElement: HTMLElement | null = null;
+  private mastercardC2pElement: HTMLElement | null = null;
   private componentReady = false;
 
   ngOnInit() {
@@ -121,7 +120,7 @@ export class MastercardClickToPayShowcaseComponent
         console.log('Component is ready');
       } else if (
         event.data.type === 'MASTERCARD_MASKED_CARDS_CHANGED' &&
-        event.data.componentId === 'mastercard-click-to-pay'
+        event.data.componentId === 'mastercard-c2p'
       ) {
         console.log('Masked cards count changed:', event.data.maskedCardsCount);
         // Handle the real-time card count updates here
@@ -129,22 +128,22 @@ export class MastercardClickToPayShowcaseComponent
     });
 
     const customElementConstructor = createCustomElement(
-      MastercardClickToPayComponent,
+      MastercardC2pComponent,
       {
         injector: this.#injector
       }
     );
-    if (!customElements.get('lib-mastercard-click-to-pay')) {
+    if (!customElements.get('lib-mastercard-c2p')) {
       customElements.define(
-        'lib-mastercard-click-to-pay',
+        'lib-mastercard-c2p',
         customElementConstructor
       );
     }
 
-    const mastercardClickToPayElement = document.createElement(
-      'lib-mastercard-click-to-pay'
-    ) as MastercardClickToPayElement;
-    mastercardClickToPayElement.inputParams = {
+    const mastercardC2pElement = document.createElement(
+      'lib-mastercard-c2p'
+    ) as MastercardC2pElement;
+    mastercardC2pElement.inputParams = {
       data: {
         locale: 'en_US',
         darkTheme: false,
@@ -152,19 +151,19 @@ export class MastercardClickToPayShowcaseComponent
         // NOTE: No encryptCardParams
       },
       trx_token: '',
-      payment_method: 'mastercard-click-to-pay',
+      payment_method: 'mastercard-c2p',
       is_test: true
     };
 
-    const mastercardClickToPayComponent = document.getElementById(
-      'mastercard-click-to-pay-component'
+    const mastercardC2pComponent = document.getElementById(
+      'mastercard-c2p-component'
     );
-    mastercardClickToPayComponent!.appendChild(mastercardClickToPayElement);
+    mastercardC2pComponent!.appendChild(mastercardC2pElement);
   }
 
   ngOnDestroy() {
-    if (this.mastercardClickToPayElement) {
-      this.mastercardClickToPayElement.remove();
+    if (this.mastercardC2pElement) {
+      this.mastercardC2pElement.remove();
     }
   }
 

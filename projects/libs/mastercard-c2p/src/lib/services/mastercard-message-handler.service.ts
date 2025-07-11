@@ -205,7 +205,7 @@ export class MastercardMessageHandlerService {
   }
 
   private exposeWindowAPI(context: MessageHandlerContext): void {
-    (window as unknown as { mastercardClickToPayComponent: unknown }).mastercardClickToPayComponent = {
+    (window as unknown as { mastercardC2pComponent: unknown }).mastercardC2pComponent = {
       // Promise-based methods for external integrations
       setCardData: (cardData: unknown) =>
         this.eventsService.sendMessageWithPromise('SET_CARD_DATA', { cardData }),

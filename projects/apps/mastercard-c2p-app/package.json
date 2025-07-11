@@ -1,0 +1,5 @@
+{
+  "name": "mastercard-c2p-app",
+  "version": "0.0.1",
+  "main": "mastercard-c2p-bundle.js"
+}

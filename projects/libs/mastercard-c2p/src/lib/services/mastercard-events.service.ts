@@ -45,7 +45,7 @@ export type MastercardEvent =
   providedIn: 'root'
 })
 export class MastercardEventsService {
-  private readonly componentId = 'mastercard-click-to-pay';
+  private readonly componentId = 'mastercard-c2p';
   private lastEmittedCount = -1; // Track to prevent duplicate emissions
 
   emitMaskedCardsChanged(maskedCardsCount: number): void {

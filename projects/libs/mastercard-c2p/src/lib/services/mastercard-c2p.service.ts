@@ -10,12 +10,12 @@ import { Observable, of } from 'rxjs';
 import {
   DpaData,
   DpaTransactionOptions
-} from '../interfaces/mastercard-click-to-pay.interface';
+} from '../interfaces/mastercard-c2p.interface';
 
 @Injectable({
   providedIn: 'root'
 })
-export class MastercardClickToPayService
+export class MastercardC2pService
   implements AlternativePaymentMethodInterface
 {
   private readonly _webPayService: WebPayService = inject(WebPayService);

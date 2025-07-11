@@ -1,7 +1,7 @@
 // Centralized error messages for consistency
 export const ERROR_MESSAGES = {
   PAYMENT_METHOD_NOT_SET: 'payment_method is required',
-  INVALID_PAYMENT_METHOD: 'Expected payment_method to be "mastercard-click-to-pay"',
+  INVALID_PAYMENT_METHOD: 'Expected payment_method to be "mastercard-c2p"',
   INVALID_DATA: 'data object is required',
   LOCALE_NOT_SET: 'data.locale is required and must be a string',
   ENV_NOT_SET: 'data.environment is required for non-test mode',
@@ -9,7 +9,7 @@ export const ERROR_MESSAGES = {
   COMPONENT_NOT_READY: 'Component not ready yet',
   SCRIPT_LOAD_FAILED: 'Failed to load required scripts',
   AUTHENTICATION_FAILED: 'Authentication process failed',
-  MASTERCARD_NOT_INITIALIZED: 'Mastercard Click to Pay not initialized',
+  MASTERCARD_NOT_INITIALIZED: 'Mastercard C2P not initialized',
   CARD_DATA_NOT_READY: 'Card data not ready for encryption',
   CARD_NOT_ENCRYPTED: 'Card not encrypted for checkout'
 } as const;

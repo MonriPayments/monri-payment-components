@@ -6,7 +6,7 @@ import {
   patchState
 } from '@ngrx/signals';
 import { computed } from '@angular/core';
-import { EncryptCardRequest } from '../interfaces/mastercard-click-to-pay.interface';
+import { EncryptCardRequest } from '../interfaces/mastercard-c2p.interface';
 
 export interface CardDataMessage {
   type: 'SET_CARD_DATA' | 'CLEAR_CARD_DATA' | 'TRIGGER_ENCRYPT_CARD' | 'TRIGGER_CHECKOUT_NEW_CARD' | 'TRIGGER_CHECKOUT_WITH_CARD';

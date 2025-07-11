@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import {
   DpaData,
   DpaTransactionOptions
-} from './mastercard-click-to-pay.interface';
+} from './mastercard-c2p.interface';
 
 export interface AlternativePaymentMethodInterface {
   startPayment(params: StartPaymentRequest): Observable<StartPaymentResponse>;
