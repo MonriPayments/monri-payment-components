@@ -469,6 +469,37 @@ export const MastercardClickToPayStore = signalStore(
         }
       };
 
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'SET_INPUT') {
+          console.log('Received SET_INPUT message:', event.data);
+
+          const inputParams = event.data.payload.inputParams;
+
+          patchState(store, {
+            inputParams: inputParams,
+            environment: inputParams.data.environment || '',
+            srcDpaId: inputParams.data.srcDpaId || '',
+            dpaData: inputParams.data.dpaData || {},
+            dpaTransactionOptions: inputParams.data.dpaTransactionOptions || {},
+            cardBrands: inputParams.data.cardBrands || []
+          });
+
+          onLoad(
+            () => {
+              const modal = window.open('', '_blank', 'width=400,height=600');
+              return modal;
+            },
+            () => {
+              const windowWithModal = window as { currentModal?: HTMLElement };
+              if (windowWithModal.currentModal) {
+                windowWithModal.currentModal.remove();
+                windowWithModal.currentModal = undefined;
+              }
+            }
+          );
+        }
+      };
+
       const onLoad = async (
         createModal: () => Window | null,
         closeModal: () => void
@@ -549,6 +580,7 @@ export const MastercardClickToPayStore = signalStore(
         checkoutWithNewCard,
         signOut,
         triggerCheckoutWithCard,
+        handleMessage,
         getCardStore: () => cardStore
       };
     }
@@ -557,6 +589,8 @@ export const MastercardClickToPayStore = signalStore(
     onInit(store) {
       patchState(store, setPending());
       store['setWindowServices']();
+
+      window.addEventListener('message', store.handleMessage);
     }
   })
 );
