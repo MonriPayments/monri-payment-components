@@ -7,8 +7,8 @@ const sourceDir = path.join(
   '..',
   '..',
   'dist',
-  'keks-pay-app',
-  'keks-pay-component.js'
+  'uac-app',
+  'uac-component.js'
 );
 const webPayDir = path.join(
   __dirname,
