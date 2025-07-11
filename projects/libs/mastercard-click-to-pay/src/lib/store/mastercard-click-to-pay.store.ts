@@ -590,7 +590,7 @@ export const MastercardClickToPayStore = signalStore(
       patchState(store, setPending());
       store['setWindowServices']();
 
-      window.addEventListener('message', store.handleMessage);
+      window.addEventListener('message', store.handleMessage.bind(this));
     }
   })
 );
