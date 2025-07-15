@@ -15,6 +15,7 @@ export interface AlternativePaymentMethodInterface {
 
 export interface StartPaymentData {
   locale: string;
+  language: string;
   environment?: 'production' | 'sandbox';
   ch_full_name?: string;
   darkTheme?: boolean;

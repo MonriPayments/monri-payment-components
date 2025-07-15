@@ -25,18 +25,17 @@ import { patchState } from '@ngrx/signals';
 import { setFulfilled } from './store/request-status.feature';
 import { ComplianceSettings } from './interfaces/mastercard-c2p.interface';
 import { ERROR_MESSAGES } from './constants/error-messages';
-import { loadMastercardUIStyle, loadMastercardUIScript } from './helpers/script-loader.helpers';
+import {
+  loadMastercardUIStyle,
+  loadMastercardUIScript
+} from './helpers/script-loader.helpers';
 
 @Component({
   selector: 'lib-mastercard-c2p',
   standalone: true,
   templateUrl: 'mastercard-c2p.component.html',
   styleUrl: 'mastercard-c2p.component.scss',
-  providers: [
-    MastercardC2pService,
-    MastercardC2pStore,
-    CardDataStore
-  ],
+  providers: [MastercardC2pService, MastercardC2pStore, CardDataStore],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class MastercardC2pComponent
@@ -86,10 +85,7 @@ export class MastercardC2pComponent
       );
     }
 
-    console.log(
-      'Mastercard C2P inputParams:',
-      this.store.inputParams()
-    );
+    console.log('Mastercard C2P inputParams:', this.store.inputParams());
   }
 
   get mastercardC2pService(): MastercardC2pService {
@@ -111,32 +107,40 @@ export class MastercardC2pComponent
     this.setupWindowMessageHandlers();
 
     runInInjectionContext(this.injector, () => {
-      effect(() => {
-        const cards = this.store.maskedCards();
-        const authComplete = this.store.authenticationComplete();
-        const isLoading = this.store.isLoadingCards();
-        
-        if (!isLoading && cards.length > 0) {
-          this.loadCardsIntoComponent(cards);
-        } else if (!isLoading && authComplete && cards.length === 0) {
-          console.log('No cards found after authentication, showing consent for new card registration');
-          this.setupConsentListener();
-        }
-        
-        // Setup payment button listener when it's available
-        if (!this.store.paymentInitiated()) {
-          this.setupPaymentButtonListener();
-        }
-      }, { allowSignalWrites: true });
+      effect(
+        () => {
+          const cards = this.store.maskedCards();
+          const authComplete = this.store.authenticationComplete();
+          const isLoading = this.store.isLoadingCards();
 
-      effect(() => {
-        if (this.store.isFulfilled() && this.store.paymentInitiated()) {
-          this.store.onLoad(
-            () => this.createModal(),
-            () => this.closeModal()
-          );
-        }
-      }, { allowSignalWrites: true });
+          if (!isLoading && cards.length > 0) {
+            this.loadCardsIntoComponent(cards);
+          } else if (!isLoading && authComplete && cards.length === 0) {
+            console.log(
+              'No cards found after authentication, showing consent for new card registration'
+            );
+            this.setupConsentListener();
+          }
+
+          // Setup payment button listener when it's available
+          if (!this.store.paymentInitiated()) {
+            this.setupPaymentButtonListener();
+          }
+        },
+        { allowSignalWrites: true }
+      );
+
+      effect(
+        () => {
+          if (this.store.isFulfilled() && this.store.paymentInitiated()) {
+            this.store.onLoad(
+              () => this.createModal(),
+              () => this.closeModal()
+            );
+          }
+        },
+        { allowSignalWrites: true }
+      );
 
       // Emit masked cards count changes (with optimization)
       let previousCount = 0;
@@ -153,7 +157,7 @@ export class MastercardC2pComponent
       effect(() => {
         const authComplete = this.store.authenticationComplete();
         const isLoading = this.store.isLoadingCards();
-        
+
         if (authComplete && !isLoading && !previousAuthComplete) {
           const maskedCardsCount = this.store.maskedCards().length;
           this.eventsService.emitAuthenticationComplete(maskedCardsCount);
@@ -269,7 +273,7 @@ export class MastercardC2pComponent
         loadMastercardUIStyle(),
         loadMastercardUIScript()
       ]);
-      
+
       console.log('UI scripts loaded successfully');
     } catch (error) {
       console.error('Failed to load UI scripts:', error);
@@ -278,10 +282,10 @@ export class MastercardC2pComponent
 
   private onPaymentButtonClick(): void {
     console.log('Payment button clicked, starting payment flow');
-    
+
     // Emit button clicked event for parent integration
     this.eventsService.emitButtonClicked();
-    
+
     try {
       this.validateInputParams();
       patchState(this.store, { paymentInitiated: true });
@@ -345,6 +349,10 @@ export class MastercardC2pComponent
 
     if (!data.locale || typeof data.locale !== 'string') {
       throw new Error(`LOCALE_NOT_SET: ${ERROR_MESSAGES.LOCALE_NOT_SET}`);
+    }
+
+    if (!data.language || typeof data.language !== 'string') {
+      throw new Error(`LANGUAGE_NOT_SET: ${ERROR_MESSAGES.LANGUAGE_NOT_SET}`);
     }
 
     if (!inputParams.is_test) {

@@ -62,6 +62,7 @@ export const MastercardC2pStore = signalStore(
   withRequestStatus(),
   withComputed(store => ({
     locale: computed(() => store.inputParams().data['locale']),
+    language: computed(() => store.inputParams().data['language']),
     darkTheme: computed(() => store.inputParams().data['darkTheme'] || false),
     email: computed(() => store.inputParams().data['ch_email']),
     phone: computed(() => store.inputParams().data['ch_phone']),
@@ -401,7 +402,7 @@ export const MastercardC2pStore = signalStore(
           const transactionRequest = {
             transaction: {
               trx_token: inputParams.trx_token || '',
-              language: store.locale(),
+              language: store.language(),
               ch_full_name:
                 inputParams.data.ch_full_name ||
                 `${inputParams.data.firstName || ''} ${

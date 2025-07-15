@@ -5,7 +5,7 @@ export const loadScript = (src: string, type?: string): Promise<void> => {
     if (type) script.type = type;
     script.onload = () => resolve();
     script.onerror = reject;
-    document.body.appendChild(script);
+    document.head.appendChild(script);
   });
 };
 
@@ -25,9 +25,15 @@ export const getScriptDomain = (environment: string): string =>
     ? 'https://src.mastercard.com'
     : 'https://sandbox.src.mastercard.com';
 
-export const loadMastercardScript = (environment: string, srcDpaId: string, locale: string): Promise<void> =>
+export const loadMastercardScript = (
+  environment: string,
+  srcDpaId: string,
+  locale: string
+): Promise<void> =>
   loadScript(
-    `${getScriptDomain(environment)}/srci/integration/2/lib.js?srcDpaId=${srcDpaId}&locale=${locale}`
+    `${getScriptDomain(
+      environment
+    )}/srci/integration/2/lib.js?srcDpaId=${srcDpaId}&locale=${locale}`
   );
 
 export const loadMastercardUIStyle = (): Promise<void> =>

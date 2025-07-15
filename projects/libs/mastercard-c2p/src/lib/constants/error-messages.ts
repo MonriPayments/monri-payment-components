@@ -4,6 +4,7 @@ export const ERROR_MESSAGES = {
   INVALID_PAYMENT_METHOD: 'Expected payment_method to be "mastercard-c2p"',
   INVALID_DATA: 'data object is required',
   LOCALE_NOT_SET: 'data.locale is required and must be a string',
+  LANGUAGE_NOT_SET: 'data.language is required and must be a string',
   ENV_NOT_SET: 'data.environment is required for non-test mode',
   INVALID_ENVIRONMENT: 'data.environment must be "production" or "sandbox"',
   COMPONENT_NOT_READY: 'Component not ready yet',
