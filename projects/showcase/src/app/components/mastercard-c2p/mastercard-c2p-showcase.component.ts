@@ -1,5 +1,8 @@
 import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
-import { MastercardC2pComponent, StartPaymentRequest } from '../../../../../libs/mastercard-c2p/src/public-api';
+import {
+  MastercardC2pComponent,
+  StartPaymentRequest
+} from '../../../../../libs/mastercard-c2p/src/public-api';
 import { createCustomElement } from '@angular/elements';
 import { environment } from './environments/environment';
 
@@ -106,9 +109,7 @@ interface MastercardC2pElement extends HTMLElement {
     </div>
   `
 })
-export class MastercardC2pShowcaseComponent
-  implements OnInit, OnDestroy
-{
+export class MastercardC2pShowcaseComponent implements OnInit, OnDestroy {
   readonly #injector = inject(Injector);
   private mastercardC2pElement: HTMLElement | null = null;
   private componentReady = false;
@@ -134,10 +135,7 @@ export class MastercardC2pShowcaseComponent
       }
     );
     if (!customElements.get('lib-mastercard-c2p')) {
-      customElements.define(
-        'lib-mastercard-c2p',
-        customElementConstructor
-      );
+      customElements.define('lib-mastercard-c2p', customElementConstructor);
     }
 
     const mastercardC2pElement = document.createElement(
@@ -147,6 +145,7 @@ export class MastercardC2pShowcaseComponent
       data: {
         locale: 'en_US',
         darkTheme: false,
+        language: 'en',
         ...environment
         // NOTE: No encryptCardParams
       },
