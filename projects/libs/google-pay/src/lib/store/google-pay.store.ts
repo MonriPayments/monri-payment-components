@@ -197,17 +197,26 @@ export const GooglePayStore = signalStore(
             ch_phone: store.inputParams().data['transaction']['ch_phone' as any],
             ch_email: store.inputParams().data['transaction']['ch_email' as any],
             meta: store.inputParams().data['transaction']['meta' as any] || {},
+            browser_info: store.inputParams().data['transaction']['browser_info' as any],
             payment_method_type: 'google-pay',
             payment_method_data: payload?.payment?.paymentMethodData?.tokenizationData?.token
           };
 
           googlePayService.newTransaction({transaction: transactionData}).pipe(
             tap((response) => {
-              window.parent.postMessage({
-                type: MessageType.PAYMENT_RESULT,
-                transaction: response.transaction,
-                requestId
-              }, '*');
+              if (response.transaction) {
+                window.parent.postMessage({
+                  type: MessageType.PAYMENT_RESULT,
+                  transaction: response.transaction,
+                  requestId
+                }, '*');
+              } else if (response.secure_message) {
+                window.parent.postMessage({
+                  type: MessageType.SECURE_MESSAGE_RESULT,
+                  secureMessage: response.secure_message,
+                  requestId
+                }, '*');
+              }
             }),
             catchError(() => {
               window.parent.postMessage({type: MessageType.PAYMENT_RESULT, transaction: null, requestId}, '*');
