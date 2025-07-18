@@ -150,11 +150,19 @@ export const ApplePayStore = signalStore(
           };
           applePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
             tap((response) => {
-              window.parent.postMessage({
-                type: MessageType.PAYMENT_RESULT,
-                transaction: response.transaction,
-                requestId
-              }, '*');
+              if (response.transaction) {
+                window.parent.postMessage({
+                  type: MessageType.PAYMENT_RESULT,
+                  transaction: response.transaction,
+                  requestId
+                }, '*');
+              } else if (response.secure_message) {
+                window.parent.postMessage({
+                  type: MessageType.SECURE_MESSAGE_RESULT,
+                  secureMessage: response.secure_message,
+                  requestId
+                }, '*');
+              }
             }),
             catchError((error) => {
               console.error("Error processing Apple Pay:", error);
