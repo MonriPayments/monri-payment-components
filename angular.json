@@ -570,7 +570,7 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "projects/apps/mastercard-c2p-app/src/favicon.ico",
-              "projects/apps/mastercard-c2p-app/src/assets"wr
+              "projects/apps/mastercard-c2p-app/src/assets"
             ],
             "styles": ["projects/apps/mastercard-c2p-app/src/styles.scss"],
             "scripts": []
