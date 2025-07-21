@@ -1,0 +1,11 @@
+<div #paymentContainer id="uac-container">
+</div>
+@if (uacStore.isPending()) {
+  <div class="container-loading-wrapper">
+    <div class="container-loading-wrapper-spinner"></div>
+  </div>
+} @else if (uacStore.error()) {
+  <div class="error-wrapper">
+    <span class="error-message">{{ uacStore.error().message}}</span>
+  </div>
+}

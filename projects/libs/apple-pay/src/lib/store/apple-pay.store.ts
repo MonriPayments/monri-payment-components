@@ -1,11 +1,8 @@
-import {patchState, signalStore, StateSignal, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
+import {patchState, signalStore, withComputed, withHooks, withMethods, withState} from '@ngrx/signals';
 import {computed, ElementRef, inject, Renderer2} from '@angular/core';
-import {setPending, withRequestStatus} from './request-status.feature';
-import {Prettify} from '@ngrx/signals/src/ts-helpers';
-import {MethodsDictionary, SignalsDictionary, SignalStoreSlices} from '@ngrx/signals/src/signal-store-models';
-import {StartPaymentRequest, TransactionStatus} from '../interfaces/alternative-payment-method.interface';
-import {ApplePayButtonConfig} from '../models/apple-pay.models';
-import {catchError, of, tap} from 'rxjs';
+import {StartPaymentRequest} from '../interfaces/alternative-payment-method.interface';
+import {ApplePayButtonConfig, MessageType} from '../models/apple-pay.models';
+import {catchError, of, take, tap} from 'rxjs';
 import {ApplePayService} from "../services/apple-pay.service";
 
 export const ApplePayStore = signalStore(
@@ -23,16 +20,14 @@ export const ApplePayStore = signalStore(
     } as StartPaymentRequest,
     resolution: window.innerWidth
   }),
-  withRequestStatus(),
   withComputed(store => ({
     appleButtonStyle: computed(() => {
       return {
         buttonStyle: store.inputParams().data['buttonStyle'] || 'black',
-        buttonType: store.inputParams().data['buttonType'],
-        locale: store.inputParams().data['locale']
+        buttonType: store.inputParams().data['buttonType'] || 'buy',
+        locale: store.inputParams().data['locale'] || 'en-US'
       };
     }),
-    // isLoading: computed(() => store.isPending())
   })),
   withMethods(
     (
@@ -43,23 +38,17 @@ export const ApplePayStore = signalStore(
     ) => {
       const loadApplePayScript = () => {
         return new Promise((resolve, reject) => {
-          console.log('Apple Pay script is loaded.');
           const script = renderer.createElement('script');
           script.src =
             'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
-          script.crossOrigin = 'anonymous';
           script.onload = resolve;
           script.onerror = reject;
+          script.async = true;
           renderer.appendChild(document.body, script);
         });
       };
 
       const onApplePayButtonClick = () => {
-        if (!(window as any).ApplePaySession) {
-          console.error('Apple Pay is not supported.');
-          return;
-        }
-
         const request = {
           countryCode: store.countryCode(),
           currencyCode: store.currencyCode(),
@@ -71,61 +60,7 @@ export const ApplePayStore = signalStore(
           }
         };
 
-        const session = new (window as any).ApplePaySession(3, request);
-
-        session.onvalidatemerchant = (event: { validationURL: string }) => {
-          applePayService.validateMerchant({
-            data: {trx_token: store.inputParams().data['trx_token']},
-            validation_url: event.validationURL,
-            initiative_context: window.location.hostname
-          }).pipe(
-            tap((response) => {
-              session.completeMerchantValidation(response)
-            }),
-            catchError((error) => {
-              console.error('Error validating merchant:', error);
-              session.abort();
-              return of(null);
-            })
-          ).subscribe();
-        };
-
-        session.onpaymentauthorized = (event: any) => {
-          const transactionData = {
-            trx_token: store.inputParams().data['trx_token'],
-            language: 'en',
-            ch_full_name: store.inputParams().data['transaction']['ch_full_name' as any],
-            ch_address: store.inputParams().data['transaction']['ch_address' as any],
-            ch_city: store.inputParams().data['transaction']['ch_city' as any],
-            ch_zip: store.inputParams().data['transaction']['ch_zip' as any],
-            ch_country: store.inputParams().data['transaction']['ch_country' as any],
-            ch_phone: store.inputParams().data['transaction']['ch_phone' as any],
-            ch_email: store.inputParams().data['transaction']['ch_email' as any],
-            meta: store.inputParams().data['transaction']['meta' as any] || {},
-            payment_method_type: 'apple-pay',
-            payment_method_data: event.payment.token
-          };
-          return new Promise((resolve) => {
-            applePayService.newTransaction({transaction: transactionData}).pipe(
-              tap((response) => {
-                const transactionStatus = response?.transaction?.status;
-                if (transactionStatus === TransactionStatus.approved) {
-                  session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
-                } else {
-                  session.completePayment(window.ApplePaySession.STATUS_FAILURE);
-                }
-                resolve(response);
-              }),
-              catchError((error) => {
-                console.error("Error processing Apple Pay:", error);
-                session.completePayment(window.ApplePaySession.STATUS_FAILURE);
-                resolve(null);
-                return of(null);
-              })
-            ).subscribe();
-          });
-        };
-        session.begin();
+        window.parent.postMessage({type: MessageType.START_APPLE_PAY_SESSION, request, requestId: Date.now()}, '*');
       };
 
 
@@ -159,45 +94,96 @@ export const ApplePayStore = signalStore(
         );
       };
 
-      const onLoad = () => {
-        loadApplePayScript().then(() => {
-          createApplePayButton();
-        });
-      };
-      const setWindowServices = () => {
-        window.applePayStore = store;
-        window.applePayService = applePayService;
+      const startPayment = () => {
+        applePayService
+          .startPayment(store.inputParams())
+          .pipe(take(1))
+          .subscribe(response => {
+            patchState(store, {
+              countryCode: response.country_code,
+              currencyCode: response.currency_code,
+              supportedNetworks: response.supported_networks,
+              merchantCapabilities: response.merchant_capabilities,
+              total: {label: response.total.label, amount: response.total.amount},
+            });
+            createApplePayButton();
+          });
+      }
+
+
+      const handleMessage = async (event: MessageEvent) => {
+        const {type, payload, requestId} = event.data;
+
+        if (type === MessageType.SET_INPUT) {
+          patchState(store, {inputParams: payload.inputParams})
+          loadApplePayScript().then(() => startPayment())
+        }
+        if (type === MessageType.VALIDATE_MERCHANT) {
+          applePayService.validateMerchant({
+            data: store.inputParams().data,
+            validation_url: payload.validationURL,
+            origin: new URL(event.origin).hostname
+          }).pipe(
+            tap((response) => {
+              window.parent.postMessage({type: MessageType.MERCHANT_VALIDATION_RESULT, response, requestId}, '*');
+            }),
+            catchError((error) => {
+              window.parent.postMessage({type: MessageType.MERCHANT_VALIDATION_ERROR, error}, '*');
+              return of(null);
+            })
+          ).subscribe();
+        }
+        if (type === MessageType.PAYMENT_AUTHORIZED) {
+          const transactionData = {
+            trx_token: store.inputParams().data['trx_token'],
+            language: 'en',
+            ch_full_name: store.inputParams().data['transaction']['ch_full_name' as any],
+            ch_address: store.inputParams().data['transaction']['ch_address' as any],
+            ch_city: store.inputParams().data['transaction']['ch_city' as any],
+            ch_zip: store.inputParams().data['transaction']['ch_zip' as any],
+            ch_country: store.inputParams().data['transaction']['ch_country' as any],
+            ch_phone: store.inputParams().data['transaction']['ch_phone' as any],
+            ch_email: store.inputParams().data['transaction']['ch_email' as any],
+            meta: store.inputParams().data['transaction']['meta' as any] || {},
+            payment_method_type: 'apple-pay',
+            payment_method_data: payload?.payment.token
+          };
+          applePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
+            tap((response) => {
+              if (response.transaction) {
+                window.parent.postMessage({
+                  type: MessageType.PAYMENT_RESULT,
+                  transaction: response.transaction,
+                  requestId
+                }, '*');
+              } else if (response.secure_message) {
+                window.parent.postMessage({
+                  type: MessageType.SECURE_MESSAGE_RESULT,
+                  secureMessage: response.secure_message,
+                  requestId
+                }, '*');
+              }
+            }),
+            catchError((error) => {
+              console.error("Error processing Apple Pay:", error);
+              window.parent.postMessage({type: MessageType.PAYMENT_RESULT, transaction: null, requestId}, '*');
+              return of(null);
+            })
+          ).subscribe();
+        }
       };
 
       return {
-        onLoad,
-        setWindowServices
+        handleMessage
       };
     }
   ),
   withHooks({
     onInit(store) {
-      patchState(
-        store,
-        setPending()
-      );
-      store.onLoad();
-      store.setWindowServices();
+      window.addEventListener('message', store.handleMessage.bind(this));
+    },
+    onDestroy(store) {
+      window.removeEventListener('message', store.handleMessage.bind(this));
     }
   })
 );
-
-declare global {
-  interface Window {
-    ApplePaySession?: any;
-    applePayService: ApplePayService;
-    applePayStore:
-      | Prettify<
-      SignalStoreSlices<object> &
-      SignalsDictionary &
-      MethodsDictionary &
-      StateSignal<object>
-    >
-      | unknown;
-  }
-}

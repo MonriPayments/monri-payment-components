@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import {Routes} from '@angular/router';
 
 export const routes: Routes = [
   {
@@ -37,6 +37,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/mastercard-c2p/mastercard-c2p-showcase.component').then(
             x => x.MastercardC2pShowcaseComponent
+          )
+      },
+      {
+        path: 'uac',
+        loadComponent: () =>
+          import('./components/uac/uac.component').then(
+            x => x.UacShowcaseComponent
           )
       }
     ]

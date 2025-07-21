@@ -1,1 +1,47 @@
-/* You can add global styles to this file, and also import other style files */
+$--apple-pay-button-width: 240px;
+$--apple-pay-button-height: 40px;
+$--apple-pay-button-border-radius: 4px;
+$--apple-pay-button-padding: 0px 0px;
+$--apple-pay-button-box-sizing: border-box;
+
+$--apple-pay-p-color: #9396a6;
+$--apple-pay-spinner-border-color: #f3f3f3;
+$--apple-pay-spinner-border-top-color: #3498db;
+$--apple-pay-button-background-color: rgba(252, 245, 255, 1);
+
+:root {
+  --apple-pay-button-width: #{$--apple-pay-button-width};
+  --apple-pay-button-height: #{$--apple-pay-button-height};
+  --apple-pay-button-border-radius: #{$--apple-pay-button-border-radius};
+  --apple-pay-button-padding: #{$--apple-pay-button-padding};
+  --apple-pay-button-box-sizing: #{$--apple-pay-button-box-sizing};
+  --apple-pay-p-color: #{$--apple-pay-p-color};
+  --apple-pay-spinner-border-color: #{$--apple-pay-spinner-border-color};
+  --apple-pay-spinner-border-top-color: #{$--apple-pay-spinner-border-top-color};
+  --apple-pay-button-background-color: #{$--apple-pay-button-background-color};
+}
+
+apple-pay-button,
+.apple-pay-button {
+  width: var(--apple-pay-button-width);
+  height: var(--apple-pay-button-height);
+  border-radius: var(--apple-pay-button-border-radius);
+  padding: var(--apple-pay-button-padding);
+  box-sizing: var(--apple-pay-button-box-sizing);
+  background-color: var(--apple-pay-button-background-color);
+
+  p {
+    color: var(--apple-pay-p-color);
+  }
+
+  .spinner {
+    border-color: var(--apple-pay-spinner-border-color);
+    border-top-color: var(--apple-pay-spinner-border-top-color);
+  }
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}

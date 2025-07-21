@@ -10,38 +10,19 @@ const sourceDir = path.join(
   'keks-pay-app',
   'keks-pay-component.js'
 );
-const sampleServerDir = path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  '..',
-  'MonriJS',
-  'sample-server',
-  'public',
-  'dist'
-);
-const bundlesDir = path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  '..',
-  'MonriJS',
-  'components',
-  'src',
-  'alternative_payments',
-  'bundles'
-);
 const webPayDir = path.join(
   __dirname,
   '..',
   '..',
   '..',
   '..',
+  '..',
+  '..',
+  'IdeaProjects',
   'WebPay',
   'public',
-  'dist'
+  'dist',
+  'alternative-payments'
 );
 
 const emptyLine =
@@ -80,6 +61,4 @@ function buildBundles(source, targetDir) {
   console.log(borderColor + border + reset);
 }
 
-buildBundles(sourceDir, sampleServerDir);
-buildBundles(sourceDir, bundlesDir);
 buildBundles(sourceDir, webPayDir);
