@@ -122,7 +122,9 @@ export const ApplePayStore = signalStore(
           applePayService.validateMerchant({
             data: store.inputParams().data,
             validation_url: payload.validationURL,
-            origin: new URL(event.origin).hostname
+            origin: (store.inputParams().data['origin'] && store.inputParams().data['origin'].trim() !== '')
+              ? new URL(store.inputParams().data['origin']).hostname
+              : new URL(event.origin).hostname
           }).pipe(
             tap((response) => {
               window.parent.postMessage({type: MessageType.MERCHANT_VALIDATION_RESULT, response, requestId}, '*');
