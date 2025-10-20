@@ -137,7 +137,9 @@ export const GooglePayStore = signalStore(
 
       const createGooglePayButton = () => {
         const paymentsClient = new google.payments.api.PaymentsClient({
-          environment: store.inputParams().environment === 'test' ? 'TEST' : 'PRODUCTION',
+          environment: store.inputParams().environment === 'dev' ||
+          store.inputParams().environment === 'test' ? 'TEST'
+            : 'PRODUCTION',
         });
 
         paymentsClient.isReadyToPay(store.googleIsReadyToPayRequest())
