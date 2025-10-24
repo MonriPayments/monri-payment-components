@@ -204,7 +204,7 @@ export const GooglePayStore = signalStore(
             payment_method_data: payload?.payment?.paymentMethodData?.tokenizationData?.token
           };
 
-          googlePayService.newTransaction({transaction: transactionData}).pipe(
+          googlePayService.newTransaction({transaction: transactionData}, store.inputParams().data['environment']).pipe(
             tap((response) => {
               if (response.transaction) {
                 window.parent.postMessage({
