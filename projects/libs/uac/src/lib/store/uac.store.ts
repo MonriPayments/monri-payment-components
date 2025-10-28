@@ -46,8 +46,12 @@ export const UacStore = signalStore(
             patchState(store, setPending())
           }
 
+          const inputParams = event?.data?.payload?.inputParams ?? {};
+          const uacEnvironment = inputParams.environment === 'dev' ? 'ipgdev'
+            : inputParams.is_test ? 'ipgtest'
+              : 'ipg';
           uacService.initiatePayment(
-            event.data.payload.inputParams.is_test ? 'ipgtest' : 'ipg',
+            uacEnvironment,
             inputData.payment_method,
             inputData.data.trx_token
           ).pipe(take(1))

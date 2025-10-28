@@ -39,7 +39,7 @@ export const KeksPayStore = signalStore(
     url: computed(() => {
       return (
         'https://kekspay.hr/' +
-        (store.environment() === 'test' ? 'galebpay' : 'pay') +
+        (store.environment() === 'dev' || store.environment() === 'test' ? 'galebpay' : 'pay') +
         '?' +
         '&qr_type=' +
         store.qr_type() +

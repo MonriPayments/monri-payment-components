@@ -11,7 +11,9 @@ export class WebPayService {
   private readonly _httpClient: HttpClient = inject(HttpClient);
 
   startPayment(req: StartPaymentRequest): Observable<StartPaymentResponse> {
-    const hostname = req.data['environment'] === 'test' ? 'ipgtest' : 'ipg'
+    const hostname = req.data['environment'] === 'dev'
+      ? 'ipgdev' : req.data['environment'] === 'test' ? 'ipgtest'
+        : 'ipg';
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
