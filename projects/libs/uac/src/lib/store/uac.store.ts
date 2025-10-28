@@ -82,7 +82,7 @@ export const UacStore = signalStore(
 
         uacService.loadPaymentContent(store.redirectURL()!).pipe(take(1)).subscribe({
           next: (content) => {
-            if (store.paymentMethod() === 'ips-rs') {
+            if (store.paymentMethod() === 'ips-rs' || store.paymentMethod() === 'ips-otp') {
               let modifiedContent = content;
 
               modifiedContent = modifiedContent.replace(
