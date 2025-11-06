@@ -25,8 +25,8 @@ export class UacMethodUtils {
       display: 'block'
     },
     qrCodeContainer: {
-      width: '150px',
-      height: '135px',
+      width: '164px',
+      height: '164px',
       marginBottom: '0rem',
       display: 'flex',
       justifyContent: 'center'

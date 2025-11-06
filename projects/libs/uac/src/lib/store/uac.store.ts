@@ -140,6 +140,8 @@ export const UacStore = signalStore(
                       timerEl.style.display = 'flex';
                       timerEl.style.flexDirection = store.isMobile() ? 'column' : 'row';
                     }
+
+                    setupContentObserver(container, store.isMobile());
                   } else {
                     console.warn('addFunctionsToDOM is not defined on window');
                   }
@@ -155,6 +157,89 @@ export const UacStore = signalStore(
           }
         });
       }
+
+      const setupContentObserver = (container: ElementRef, isMobile: boolean) => {
+        const containerEl = container.nativeElement;
+        if (!containerEl) return;
+
+        const calculateOptimalHeight = () => {
+          setTimeout(() => {
+            const ipsContainer = containerEl.querySelector('#ipsNBSContainer');
+            if (!ipsContainer) {
+              return;
+            }
+
+            let newHeight: number;
+
+            if (isMobile) {
+              const bankLogo = ipsContainer.querySelector('#bankLogo') as HTMLImageElement;
+              const bankSelect = ipsContainer.querySelector('#ipsNBSBankSelect') as HTMLSelectElement;
+
+
+              const isBankSelected = bankSelect && bankSelect.value &&
+                                   bankLogo && bankLogo.style.display !== 'none' &&
+                                   bankLogo.src && bankLogo.src.trim() !== '';
+
+
+              if (isBankSelected) {
+                newHeight = 420;
+              } else {
+                newHeight = 360;
+              }
+            } else {
+              const contentHeight = ipsContainer.scrollHeight;
+              newHeight = Math.max(contentHeight + 40, 220);
+            }
+
+            const currentMinHeight = parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--iframe-min-height') || '320');
+
+            if (Math.abs(newHeight - currentMinHeight) > 10) {
+              window.parent.postMessage({
+                type: 'RESIZE_IFRAME',
+                data: {
+                  minHeight: `${newHeight}px`
+                }
+              }, '*');
+            }
+          }, 100);
+        };
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' ||
+                (mutation.type === 'attributes' &&
+                 (mutation.attributeName === 'style' || mutation.attributeName === 'class'))) {
+              const target = mutation.target as HTMLElement;
+
+              if (target.id === 'bankLogo' ||
+                  target.id === 'bankLogoContainer' ||
+                  target.id === 'ipsNBSBankSelect' ||
+                  target.closest('#bankLogoContainer') ||
+                  target.closest('#ipsNBSBankSelect')) {
+                calculateOptimalHeight();
+              }
+            }
+          });
+        });
+
+        observer.observe(containerEl, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'class', 'src']
+        });
+
+        setTimeout(() => {
+          const bankSelect = containerEl.querySelector('#ipsNBSBankSelect') as HTMLSelectElement;
+          if (bankSelect) {
+            bankSelect.addEventListener('change', () => {
+              setTimeout(() => calculateOptimalHeight(), 200);
+            });
+          }
+        }, 500);
+
+        calculateOptimalHeight();
+      };
 
       return {
         handleMessage,

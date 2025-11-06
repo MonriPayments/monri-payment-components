@@ -1,7 +1,9 @@
 #uac-container {
   height: 100%;
-  width: calc(100% - 16px);
-  margin: 8px;
+  width: 100%;
+  min-width: 320px;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 @font-face {
@@ -31,6 +33,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 150px;
+  max-width: 400px;
 }
 
 .container-loading-wrapper-spinner {
