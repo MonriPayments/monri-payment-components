@@ -41,7 +41,9 @@ export class UacMethodUtils {
       fontSize: '12px',
       padding: '0.4rem 1rem',
       cursor: 'pointer',
-      transition: '0.3s ease-in-out'
+      transition: '0.3s ease-in-out',
+      backgroundPosition: 'center 50%',
+      backgroundSize: '50%'
     },
     timer: {
       marginBottom: '0rem',
